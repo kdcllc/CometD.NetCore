@@ -1,0 +1,42 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<RootNamespace>CometD.NetCore2</RootNamespace>
+		<Authors>King David Consulting LLC</Authors>
+		<Company>King David Consulting LLC</Company>
+		<Description>CometD.NetCore2 Port of the Java CometD implementation</Description>
+		<Copyright>King David Consulting LLC</Copyright>
+		<PackageProjectUrl>https://github.com/kdcllc/CometD.NetCore</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/kdcllc/CometD.NetCore.git</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageTags>asp.net core, cometd, salesforce, platform, events, bayeux </PackageTags>
+		<PackageLicenseUrl>https://github.com/kdcllc/CometD.NetCore/blob/master/LICENSE</PackageLicenseUrl>
+		<PackageId>CometD.NetCore2</PackageId>
+  </PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<DefineConstants>DEBUG;TRACE</DefineConstants>
+		<DebugType>full</DebugType>
+		<DebugSymbols>true</DebugSymbols>
+		<NoWarn>1701;1702;1591;1574;1572</NoWarn>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<DebugType>pdbonly</DebugType>
+		<DebugSymbols>true</DebugSymbols>
+		<NoWarn>1701;1702;1591;1574;1572</NoWarn>
+	</PropertyGroup>
+
+	
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Logging" Version="2.1.1" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="2.1.1" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="2.1.1" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="2.1.1" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="2.1.1" />
+		<PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+  </ItemGroup>
+
+</Project>
