@@ -4,8 +4,6 @@
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<RootNamespace>CometD.NetCore2</RootNamespace>
-		<Authors>King David Consulting LLC</Authors>
-		<Company>King David Consulting LLC</Company>
 		<Description>CometD.NetCore2 Port of the Java CometD implementation</Description>
 		<Copyright>King David Consulting LLC</Copyright>
 		<PackageProjectUrl>https://github.com/kdcllc/CometD.NetCore</PackageProjectUrl>
@@ -15,6 +13,7 @@
 		<PackageLicenseUrl>https://github.com/kdcllc/CometD.NetCore/blob/master/LICENSE</PackageLicenseUrl>
     <PackageIconUrl>https://raw.githubusercontent.com/kdcllc/CometD.NetCore/master/img/logo64x64.png</PackageIconUrl>
 		<PackageId>CometD.NetCore2</PackageId>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
