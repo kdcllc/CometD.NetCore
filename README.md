@@ -2,17 +2,20 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/6t0kmjpr6ckvhrxe?svg=true)](https://ci.appveyor.com/project/kdcllc/cometd-netcore)
 
 This repo contains the CometD .NET Core implementation of the Java ported code.
-1. CometD.NetCore - CometD.org implementation
+- CometD.NetCore - [CometD.org](CometD.org) implementation, supports replay id.
+- [CometD.NetCore.Salesforce project](https://github.com/kdcllc/CometD.NetCore.Salesforce) - provides with implementation of this library.
 
 
 ## Nuget Packages
-1. ``` Install-Package CometD.NetCore2 -Version 1.0.0 ```
+``` 
+PM> Install-Package CometD.NetCore2 
+```
 
-## Saleforce
-[Video](https://www.youtube.com/watch?v=L6OWyCfQD6U)
-1. Sing up for development sandbox with Saleforce: [https://developer.salesforce.com/signup](https://developer.salesforce.com/signup)
-2. Create Connected App in Salesforce
-3. Create a Platform Event
+## Configure Saleforce Developer instance
+[Salesforce Platform Events - Video](https://www.youtube.com/watch?v=L6OWyCfQD6U)
+1. Sing up for development sandbox with Saleforce: [https://developer.salesforce.com/signup](https://developer.salesforce.com/signup).
+2. Create Connected App in Salesforce.
+3. Create a Platform Event.
 
 ### Create Connected App in Salesforce
 1. Setup -> Quick Find -> manage -> App Manager -> New Connected App.
@@ -38,6 +41,8 @@ This repo contains the CometD .NET Core implementation of the Java ported code.
 
 Use workbench to test the Event [workbench](https://workbench.developerforce.com/login.php?startUrl=%2Finsert.php)
 
+## OAuth Apps
+[Use login instead of test](https://github.com/developerforce/Force.com-Toolkit-for-NET/wiki/Web-Server-OAuth-Flow-Sample#am-i-using-the-test-environment)
 
 ## Special thanks to the following projects and contributors:
 - [Oyatel/CometD.NET](https://github.com/Oyatel/CometD.NET)

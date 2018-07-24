@@ -4,7 +4,7 @@
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<RootNamespace>CometD.NetCore2</RootNamespace>
-		<Description>CometD.NetCore2 Port of the Java CometD implementation</Description>
+		<Description>CometD C# implementation of Bayeux protocal. This i port of the Java CometD implementation.</Description>
 		<Copyright>King David Consulting LLC</Copyright>
 		<PackageProjectUrl>https://github.com/kdcllc/CometD.NetCore</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/kdcllc/CometD.NetCore.git</RepositoryUrl>
