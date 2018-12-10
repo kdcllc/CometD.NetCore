@@ -13,8 +13,6 @@ using Newtonsoft.Json;
 
 namespace CometD.NetCore.Client.Transport
 {
-    /// <version>  $Revision$ $Date: 2010-10-19 12:35:37 +0200 (Tue, 19 Oct 2010) $
-    /// </version>
     public class LongPollingTransport : HttpClientTransport
     {
         private static ILogger _logger;
@@ -25,12 +23,17 @@ namespace CometD.NetCore.Client.Transport
 
         private bool _appendMessageType;
 
-        public LongPollingTransport(IDictionary<string, object> options, NameValueCollection headers)
+        public LongPollingTransport(
+            IDictionary<string, object> options,
+            NameValueCollection headers)
             : base("long-polling", options, headers)
         {
         }
 
-        public LongPollingTransport(IDictionary<string, object> options, NameValueCollection headers, ILogger logger)
+        public LongPollingTransport(
+            IDictionary<string, object> options,
+            NameValueCollection headers,
+            ILogger logger)
             : this(options, headers)
         {
             _logger = logger;
