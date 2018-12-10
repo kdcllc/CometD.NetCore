@@ -17,7 +17,7 @@ namespace CometD.NetCore.Client.Transport
     /// </version>
     public class LongPollingTransport : HttpClientTransport
     {
-        private static ILogger logger = new LoggerFactory()
+        private static ILogger _logger = new LoggerFactory()
             .AddConsole(LogLevel.Debug)
             .AddDebug()
             .CreateLogger(nameof(LongPollingTransport));
@@ -31,6 +31,12 @@ namespace CometD.NetCore.Client.Transport
         public LongPollingTransport(IDictionary<string, object> options, NameValueCollection headers)
             : base("long-polling", options, headers)
         {
+        }
+
+        public LongPollingTransport(IDictionary<string, object> options, NameValueCollection headers, ILogger logger)
+            : this(options, headers)
+        {
+            _logger = logger;
         }
 
         public override bool Accept(string bayeuxVersion)
@@ -180,7 +186,7 @@ namespace CometD.NetCore.Client.Transport
 
             var content = JsonConvert.SerializeObject(ObjectConverter.ToListOfDictionary(messages));
 
-            logger.LogDebug($"Send: {content}");
+            _logger?.LogDebug($"Send: {content}");
 
             var longPollingRequest = new LongPollingRequest(listener, messages, request);
 
