@@ -17,10 +17,7 @@ namespace CometD.NetCore.Client.Transport
     /// </version>
     public class LongPollingTransport : HttpClientTransport
     {
-        private static ILogger _logger = new LoggerFactory()
-            .AddConsole(LogLevel.Debug)
-            .AddDebug()
-            .CreateLogger(nameof(LongPollingTransport));
+        private static ILogger _logger;
 
         private List<TransportExchange> _exchanges = new List<TransportExchange>();
         private List<LongPollingRequest> transportQueue = new List<LongPollingRequest>();
