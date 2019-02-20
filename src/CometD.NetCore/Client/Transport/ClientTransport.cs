@@ -22,6 +22,13 @@ namespace CometD.NetCore.Client.Transport
         {
         }
         public abstract void Reset();
-        public abstract void Send(ITransportListener listener, IList<IMutableMessage> messages);
+
+        /// <summary>
+        /// Send request over the transport.
+        /// </summary>
+        /// <param name="listener"></param>
+        /// <param name="messages"></param>
+        /// <param name="requestTimeOut">Default timeout for the request is 2min or 120000 seconds</param>
+        public abstract void Send(ITransportListener listener, IList<IMutableMessage> messages, int requestTimeOut= 120000);
     }
 }

@@ -2,7 +2,6 @@
 
 namespace CometD.NetCore.Bayeux
 {
-
     /// <summary> The mutable version of a {@link Message}</summary>
     public interface IMutableMessage : IMessage
     {
@@ -30,8 +29,9 @@ namespace CometD.NetCore.Bayeux
         /// </param>
         new string Id { get; set; }
 
-        /// <param name="successful">the successfulness of this message
-        /// </param>
+        /// <summary>
+        /// The successfulness of this message
+        /// </summary>
         new bool Successful { get; set; }
 
         /// <summary> Convenience method to retrieve the {@link #ADVICE_FIELD} and create it if it does not exist</summary>

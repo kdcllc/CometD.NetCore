@@ -17,9 +17,9 @@ namespace CometD.NetCore.Client.Transport
     {
         private static ILogger _logger;
 
-        private List<TransportExchange> _exchanges = new List<TransportExchange>();
-        private List<LongPollingRequest> transportQueue = new List<LongPollingRequest>();
-        private HashSet<LongPollingRequest> transmissions = new HashSet<LongPollingRequest>();
+        private readonly List<TransportExchange> _exchanges = new List<TransportExchange>();
+        private readonly List<LongPollingRequest> transportQueue = new List<LongPollingRequest>();
+        private readonly HashSet<LongPollingRequest> transmissions = new HashSet<LongPollingRequest>();
 
         private bool _appendMessageType;
 
@@ -39,7 +39,7 @@ namespace CometD.NetCore.Client.Transport
             _logger = logger;
         }
 
-        public override bool Accept(string bayeuxVersion)
+        public override bool Accept(string version)
         {
             return true;
         }
@@ -78,30 +78,34 @@ namespace CometD.NetCore.Client.Transport
         // Fix for not running more than two simultaneous requests:
         public class LongPollingRequest
         {
-            private readonly ITransportListener listener;
-            private readonly IList<IMutableMessage> messages;
-            private readonly HttpWebRequest request;
-
+            private readonly ITransportListener _listener;
+            private readonly IList<IMutableMessage> _messages;
+            private readonly HttpWebRequest _request;
+            public int RequestTimout;
             public  TransportExchange Exchange;
 
-            public LongPollingRequest(ITransportListener _listener, IList<IMutableMessage> _messages,
-                    HttpWebRequest _request)
+            public LongPollingRequest(
+                ITransportListener listener,
+                IList<IMutableMessage> messages,
+                HttpWebRequest request,
+                int requestTimeout = 120000)
             {
-                listener = _listener;
-                messages = _messages;
-                request = _request;
+                _listener = listener;
+                _messages = messages;
+                _request = request;
+                RequestTimout = requestTimeout;
             }
 
             public void Send()
             {
                 try
                 {
-                    request.BeginGetRequestStream(new AsyncCallback(GetRequestStreamCallback), Exchange);
+                    _request.BeginGetRequestStream(new AsyncCallback(GetRequestStreamCallback), Exchange);
                 }
                 catch (Exception e)
                 {
                     Exchange.Dispose();
-                    listener.OnException(e, ObjectConverter.ToListOfIMessage(messages));
+                    _listener.OnException(e, ObjectConverter.ToListOfIMessage(_messages));
                 }
             }
         }
@@ -149,7 +153,10 @@ namespace CometD.NetCore.Client.Transport
             PerformNextRequest();
         }
 
-        public override void Send(ITransportListener listener, IList<IMutableMessage> messages)
+        public override void Send(
+            ITransportListener listener,
+            IList<IMutableMessage> messages,
+            int requestTimeout = 1200)
         {
             //Console.WriteLine();
             //Console.WriteLine("send({0} message(s))", messages.Count);
@@ -188,7 +195,7 @@ namespace CometD.NetCore.Client.Transport
 
             _logger?.LogDebug($"Send: {content}");
 
-            var longPollingRequest = new LongPollingRequest(listener, messages, request);
+            var longPollingRequest = new LongPollingRequest(listener, messages, request, requestTimeout);
 
             var exchange = new TransportExchange(this, listener, messages, longPollingRequest)
             {
@@ -251,17 +258,14 @@ namespace CometD.NetCore.Client.Transport
                 exchange.Listener.OnSending(ObjectConverter.ToListOfIMessage(exchange.Messages));
                 var result = exchange.Request.BeginGetResponse(new AsyncCallback(GetResponseCallback), exchange);
 
-                long timeout = 120000;
+                long timeout = exchange?.LongPollingRequest?.RequestTimout ?? 120000;
                 ThreadPool.RegisterWaitForSingleObject(result.AsyncWaitHandle, new WaitOrTimerCallback(TimeoutCallback), exchange, timeout, true);
 
                 exchange.IsSending = false;
             }
             catch (Exception e)
             {
-                if (exchange.Request != null)
-                {
-                    exchange.Request.Abort();
-                }
+                exchange.Request?.Abort();
 
                 exchange.Dispose();
                 exchange.Listener.OnException(e, ObjectConverter.ToListOfIMessage(exchange.Messages));
@@ -318,10 +322,8 @@ namespace CometD.NetCore.Client.Transport
                 Console.WriteLine("Timeout");
                 var exchange = state as TransportExchange;
 
-                if (exchange.Request != null)
-                {
-                    exchange.Request.Abort();
-                }
+                exchange.Request?.Abort();
+
                 exchange.Dispose();
             }
         }

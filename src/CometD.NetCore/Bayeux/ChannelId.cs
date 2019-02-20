@@ -94,7 +94,6 @@ namespace CometD.NetCore.Bayeux
         public bool IsService()
         {
             return _segments.Length > 0 && "service".Equals(_segments[0]);
-
         }
 
         public override bool Equals(object obj)
@@ -139,7 +138,6 @@ namespace CometD.NetCore.Bayeux
 
             switch (_wild)
             {
-
                 case 0:
                     return Equals(name);
 

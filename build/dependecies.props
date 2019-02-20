@@ -1,0 +1,34 @@
+<Project>
+
+    <PropertyGroup>
+        <NetCoreCommonVersion>2.1.1</NetCoreCommonVersion>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(TargetFramework)' == 'netcoreapp2.1' Or '$(TargetFramework)' == 'netstandard2.0'">
+        <NetCoreCommonVersion>2.1.1</NetCoreCommonVersion>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(TargetFramework)' == 'netcoreapp2.2'">
+        <NetCoreCommonVersion>2.2.0</NetCoreCommonVersion>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(TargetFramework)' == 'netcoreapp3.0'">
+        <NetCoreCommonVersion>3.0.0-preview.19074.2</NetCoreCommonVersion>
+    </PropertyGroup>
+
+    <ItemGroup Label="NetCore">
+        <PackageReference Update="Microsoft.Extensions.Logging.Abstractions" Version="$(NetCoreCommonVersion)" />
+        <PackageReference Update="Microsoft.Extensions.Logging" Version="$(NetCoreCommonVersion)" />
+		<PackageReference Update="Microsoft.Extensions.Logging.Configuration" Version="$(NetCoreCommonVersion)" />
+		<PackageReference Update="Microsoft.Extensions.Logging.Console" Version="$(NetCoreCommonVersion)" />
+		<PackageReference Update="Microsoft.Extensions.Logging.Debug" Version="$(NetCoreCommonVersion)" />
+    </ItemGroup>
+
+    <ItemGroup Label="Shared Libraries">
+		<PackageReference Update="Newtonsoft.Json" Version="11.0.2" />
+    </ItemGroup>
+
+    <ItemGroup Label="SourceLink">
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-18618-05" PrivateAssets="All" />
+    </ItemGroup>
+</Project>

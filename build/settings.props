@@ -1,0 +1,29 @@
+<Project>
+
+  <PropertyGroup Label="Basic Settings">
+    <IsPackable>true</IsPackable>
+    <VersionPrefix>2.0.0-pre</VersionPrefix>
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
+    <NoWarn>$(NoWarn);CS1591;CS1574;CS1572</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Nuget Package Settings">
+		<Description>CometD C# implementation of Bayeux protocal. This i port of the Java CometD implementation.</Description>
+		<PackageProjectUrl>https://github.com/kdcllc/CometD.NetCore</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/kdcllc/CometD.NetCore.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+		<PackageLicense>https://github.com/kdcllc/CometD.NetCore/blob/master/LICENSE</PackageLicense>
+    <PackageIconUrl>https://raw.githubusercontent.com/kdcllc/CometD.NetCore/master/img/logo64x64.png</PackageIconUrl>
+    <PackageTags>aspnetcore,dotnet, cometd, salesforce, platform, events, bayeux </PackageTags>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <PropertyGroup Label="SourceLink Settings">
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+  </PropertyGroup>
+</Project>

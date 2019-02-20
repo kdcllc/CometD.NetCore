@@ -169,6 +169,5 @@ namespace CometD.NetCore.Common
         protected abstract void SendSubscribe();
 
         protected abstract void SendUnSubscribe();
-
     }
 }
