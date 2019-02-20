@@ -10,10 +10,10 @@ namespace CometD.NetCore.Bayeux
         public const string WILD = "*";
         public const string DEEPWILD = "**";
 
-        private string _name;
-        private string[] _segments;
-        private int _wild;
-        private string _parent;
+        private readonly string _name;
+        private readonly string[] _segments;
+        private readonly int _wild;
+        private readonly string _parent;
 
 
         public ChannelId(string name)
