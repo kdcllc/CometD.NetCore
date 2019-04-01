@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27703.2042
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28606.126
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CometD.NetCore", "src\CometD.NetCore\CometD.NetCore.csproj", "{24F880B4-E4DE-4BED-859C-D93334F5B5B1}"
 EndProject
@@ -10,10 +10,22 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 		.gitignore = .gitignore
 		appveyor.yml = appveyor.yml
+		CHANGELOG.md = CHANGELOG.md
+		clean.sh = clean.sh
 		Directory.Build.props = Directory.Build.props
+		Directory.Build.targets = Directory.Build.targets
 		LICENSE = LICENSE
 		README.md = README.md
 	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{875CDACD-6405-4378-98A6-184CC4C9D8D3}"
+	ProjectSection(SolutionItems) = preProject
+		build\dependecies.props = build\dependecies.props
+		build\settings.props = build\settings.props
+		build\sources.props = build\sources.props
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{B7B77B23-D917-4346-BD1F-1A577ED394DF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -28,6 +40,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{24F880B4-E4DE-4BED-859C-D93334F5B5B1} = {B7B77B23-D917-4346-BD1F-1A577ED394DF}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C57ACDA6-7266-4676-8656-B29CA9BDFCAB}

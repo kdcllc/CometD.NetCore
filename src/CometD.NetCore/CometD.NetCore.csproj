@@ -1,42 +1,22 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
-		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TargetFrameworks>netstandard2.0;netcoreapp2.2;netcoreapp3.0</TargetFrameworks>
 		<RootNamespace>CometD.NetCore2</RootNamespace>
-		<Description>CometD C# implementation of Bayeux protocal. This i port of the Java CometD implementation.</Description>
-		<Copyright>King David Consulting LLC</Copyright>
-		<PackageProjectUrl>https://github.com/kdcllc/CometD.NetCore</PackageProjectUrl>
-		<RepositoryUrl>https://github.com/kdcllc/CometD.NetCore.git</RepositoryUrl>
-		<RepositoryType>git</RepositoryType>
-		<PackageTags>asp.net core, cometd, salesforce, platform, events, bayeux </PackageTags>
-		<PackageLicenseUrl>https://github.com/kdcllc/CometD.NetCore/blob/master/LICENSE</PackageLicenseUrl>
-    <PackageIconUrl>https://raw.githubusercontent.com/kdcllc/CometD.NetCore/master/img/logo64x64.png</PackageIconUrl>
 		<PackageId>CometD.NetCore2</PackageId>
-		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-		<DefineConstants>DEBUG;TRACE</DefineConstants>
-		<DebugType>full</DebugType>
-		<DebugSymbols>true</DebugSymbols>
-		<NoWarn>1701;1702;1591;1574;1572</NoWarn>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-		<DebugType>pdbonly</DebugType>
-		<DebugSymbols>true</DebugSymbols>
-		<NoWarn>1701;1702;1591;1574;1572</NoWarn>
-	</PropertyGroup>
-
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Logging" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Configuration" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Console" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Debug" />
+		<PackageReference Include="Newtonsoft.Json" />
+  </ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Extensions.Logging" Version="2.1.1" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="2.1.1" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="2.1.1" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Console" Version="2.1.1" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="2.1.1" />
-		<PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
-  </ItemGroup>
+	  <Folder Include="Properties\" />
+	</ItemGroup>
 
 </Project>

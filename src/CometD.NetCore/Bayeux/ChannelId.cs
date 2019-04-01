@@ -10,10 +10,10 @@ namespace CometD.NetCore.Bayeux
         public const string WILD = "*";
         public const string DEEPWILD = "**";
 
-        private string _name;
-        private string[] _segments;
-        private int _wild;
-        private string _parent;
+        private readonly string _name;
+        private readonly string[] _segments;
+        private readonly int _wild;
+        private readonly string _parent;
 
 
         public ChannelId(string name)
@@ -94,7 +94,6 @@ namespace CometD.NetCore.Bayeux
         public bool IsService()
         {
             return _segments.Length > 0 && "service".Equals(_segments[0]);
-
         }
 
         public override bool Equals(object obj)
@@ -139,7 +138,6 @@ namespace CometD.NetCore.Bayeux
 
             switch (_wild)
             {
-
                 case 0:
                     return Equals(name);
 

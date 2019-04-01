@@ -20,18 +20,18 @@ namespace CometD.NetCore.Client
         public const string MAX_BACKOFF_OPTION = "maxBackoff";
         public const string BAYEUX_VERSION = "1.0";
 
-        private TransportRegistry transportRegistry = new TransportRegistry();
-        private Dictionary<string, object> options = new Dictionary<string, object>();
+        private readonly TransportRegistry transportRegistry = new TransportRegistry();
+        private readonly Dictionary<string, object> options = new Dictionary<string, object>();
         private BayeuxClientState bayeuxClientState;
-        private Queue<IMutableMessage> messageQueue = new Queue<IMutableMessage>();
-        private CookieCollection cookieCollection = new CookieCollection();
-        private ITransportListener handshakeListener;
-        private ITransportListener connectListener;
-        private ITransportListener disconnectListener;
-        private ITransportListener publishListener;
-        private static Mutex stateUpdateInProgressMutex = new Mutex();
+        private readonly Queue<IMutableMessage> messageQueue = new Queue<IMutableMessage>();
+        private readonly CookieCollection cookieCollection = new CookieCollection();
+        private readonly ITransportListener handshakeListener;
+        private readonly ITransportListener connectListener;
+        private readonly ITransportListener disconnectListener;
+        private readonly ITransportListener publishListener;
+        private static readonly Mutex StateUpdateInProgressMutex = new Mutex();
         private int stateUpdateInProgress;
-        private AutoResetEvent stateChanged = new AutoResetEvent(false);
+        private readonly AutoResetEvent stateChanged = new AutoResetEvent(false);
 
         public BayeuxClient(string url, params ClientTransport[] transports)
         {
@@ -98,7 +98,7 @@ namespace CometD.NetCore.Client
         public override bool Handshook => IsHandshook(bayeuxClientState);
 
         public override string Id => bayeuxClientState.clientId;
-        
+
         public override void Disconnect()
         {
             UpdateBayeuxClientState(
@@ -147,7 +147,7 @@ namespace CometD.NetCore.Client
         #endregion
 
         #region IBayeux
-        
+
         ///<inheritdoc/>
         public ICollection<string> KnownTransportNames => transportRegistry.KnownTransports;
 
@@ -418,7 +418,7 @@ namespace CometD.NetCore.Client
         #endregion
 
         protected State CurrentState => bayeuxClientState.type;
-        
+
         public State WaitFor(int waitMs, ICollection<State> states)
         {
             var stop = DateTime.Now.AddMilliseconds(waitMs);
@@ -475,7 +475,7 @@ namespace CometD.NetCore.Client
             }
             return false;
         }
-        
+
         protected bool SendMessages(IList<IMutableMessage> messages)
         {
             var bayeuxClientState = this.bayeuxClientState;
@@ -554,12 +554,12 @@ namespace CometD.NetCore.Client
         {
             return bayeuxClientState.type == State.CONNECTED;
         }
-        
+
         private bool IsDisconnected(BayeuxClientState bayeuxClientState)
         {
             return bayeuxClientState.type == State.DISCONNECTING || bayeuxClientState.type == State.DISCONNECTED;
         }
-        
+
         protected void ProcessConnect(IMutableMessage connect)
         {
             UpdateBayeuxClientState(
@@ -638,7 +638,7 @@ namespace CometD.NetCore.Client
 
             return action;
         }
-        
+
         protected bool ScheduleConnect(long interval, long backoff)
         {
             return ScheduleAction(
@@ -664,7 +664,7 @@ namespace CometD.NetCore.Client
             timer.Enabled = true;
             return true;
         }
-        
+
         protected void Initialize()
         {
             var backoffIncrement = ObjectConverter.ToInt64(GetOption(BACKOFF_INCREMENT_OPTION), 1000L);
@@ -679,7 +679,7 @@ namespace CometD.NetCore.Client
             var messages = TakeMessages();
             FailMessages(null, ObjectConverter.ToListOfIMessage(messages));
         }
-        
+
         protected IMutableMessage NewMessage()
         {
             return new DictionaryMessage();
@@ -707,7 +707,7 @@ namespace CometD.NetCore.Client
         {
             return !IsDisconnected(bayeuxClientState) && !Batching && !IsHandshaking(bayeuxClientState);
         }
-        
+
         private void UpdateBayeuxClientState(BayeuxClientStateUpdater_createDelegate create)
         {
             UpdateBayeuxClientState(create, null);
@@ -715,9 +715,9 @@ namespace CometD.NetCore.Client
 
         private void UpdateBayeuxClientState(BayeuxClientStateUpdater_createDelegate create, BayeuxClientStateUpdater_postCreateDelegate postCreate)
         {
-            stateUpdateInProgressMutex.WaitOne();
+            StateUpdateInProgressMutex.WaitOne();
             ++stateUpdateInProgress;
-            stateUpdateInProgressMutex.ReleaseMutex();
+            StateUpdateInProgressMutex.ReleaseMutex();
 
             BayeuxClientState newState = null;
             var oldState = bayeuxClientState;
@@ -746,7 +746,7 @@ namespace CometD.NetCore.Client
             newState.Execute();
 
             // Notify threads waiting in waitFor()
-            stateUpdateInProgressMutex.WaitOne();
+            StateUpdateInProgressMutex.WaitOne();
             --stateUpdateInProgress;
 
             if (stateUpdateInProgress == 0)
@@ -754,9 +754,9 @@ namespace CometD.NetCore.Client
                 stateChanged.Set();
             }
 
-            stateUpdateInProgressMutex.ReleaseMutex();
+            StateUpdateInProgressMutex.ReleaseMutex();
         }
-        
+
         public enum State
         {
             INVALID, UNCONNECTED, HANDSHAKING, REHANDSHAKING, CONNECTING, CONNECTED, DISCONNECTING, DISCONNECTED

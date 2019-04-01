@@ -21,7 +21,6 @@ namespace CometD.NetCore.Client.Extension
 
         public bool ReceiveMeta(IClientSession session, IMutableMessage message)
         {
-
             if (ChannelFields.META_HANDSHAKE.Equals(message.Channel))
             {
                 var ext = (Dictionary<string, object>)message.GetExt(false);
@@ -38,7 +37,6 @@ namespace CometD.NetCore.Client.Extension
 
         public bool SendMeta(IClientSession session, IMutableMessage message)
         {
-
             if (ChannelFields.META_SUBSCRIBE.Equals(message.Channel) ||
                 ChannelFields.META_UNSUBSCRIBE.Equals(message.Channel))
             {
