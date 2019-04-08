@@ -158,8 +158,8 @@ namespace CometD.NetCore.Client.Transport
             IList<IMutableMessage> messages,
             int requestTimeout = 1200)
         {
-            //Console.WriteLine();
-            //Console.WriteLine("send({0} message(s))", messages.Count);
+            _logger?.LogDebug($"send({messages.Count} message(s)");
+
             var url = Url;
 
             if (_appendMessageType && messages.Count == 1 && messages[0].Meta)
@@ -247,7 +247,6 @@ namespace CometD.NetCore.Client.Transport
                 {
                     // Convert the string into a byte array.
                     var byteArray = Encoding.UTF8.GetBytes(exchange.Content);
-                    //Console.WriteLine("Sending message(s): {0}", exchange.content);
 
                     // Write to the request stream.
                     postStream.Write(byteArray, 0, exchange.Content.Length);
@@ -289,7 +288,7 @@ namespace CometD.NetCore.Client.Transport
                             responsestring = streamRead.ReadToEnd();
                         }
                     }
-                    //Console.WriteLine("Received message(s): {0}", responsestring);
+                    _logger?.LogDebug("Received message(s).");
 
                     if (response.Cookies != null)
                     {
@@ -301,7 +300,15 @@ namespace CometD.NetCore.Client.Transport
 
                     response.Close();
                 }
-                exchange.Messages = DictionaryMessage.ParseMessages(responsestring);
+
+                try
+                {
+                    exchange.Messages = DictionaryMessage.ParseMessages(responsestring);
+                }
+                catch (Exception e)
+                {
+                    _logger?.LogError($"Failed to parse the messages json: {e}");
+                }
 
                 exchange.Listener.OnMessages(exchange.Messages);
                 exchange.Dispose();
@@ -319,12 +326,13 @@ namespace CometD.NetCore.Client.Transport
         {
             if (timedOut)
             {
-                Console.WriteLine("Timeout");
+                _logger?.LogDebug("Timeout");
+
                 var exchange = state as TransportExchange;
 
-                exchange.Request?.Abort();
+                exchange?.Request?.Abort();
 
-                exchange.Dispose();
+                exchange?.Dispose();
             }
         }
 

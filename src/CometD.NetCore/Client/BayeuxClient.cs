@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Timers;
@@ -12,9 +13,10 @@ using Newtonsoft.Json.Linq;
 
 namespace CometD.NetCore.Client
 {
-    /// <summary> </summary>
     public class BayeuxClient : AbstractClientSession, IBayeux
     {
+        private readonly ILogger logger;
+
         //private static ILogger<BayeuxClient> = new LoggerFactory()
         public const string BACKOFF_INCREMENT_OPTION = "backoffIncrement";
         public const string MAX_BACKOFF_OPTION = "maxBackoff";
@@ -35,18 +37,20 @@ namespace CometD.NetCore.Client
 
         public BayeuxClient(string url, params ClientTransport[] transports)
         {
-            //logger = Log.getLogger(GetType().FullName + "@" + this.GetHashCode());
-            //Console.WriteLine(GetType().FullName + "@" + this.GetHashCode());
-
             handshakeListener = new HandshakeTransportListener(this);
             connectListener = new ConnectTransportListener(this);
             disconnectListener = new DisconnectTransportListener(this);
             publishListener = new PublishTransportListener(this);
 
-            if (transports == null || transports.Length == 0 || transports[0] == null)
-            {
+            if (transports == null)
                 throw new ArgumentNullException(nameof(transports));
-            }
+
+            if (transports.Length == 0)
+                throw new ArgumentException("No transports provided", nameof(transports));
+
+            if (transports.Any(t => t == null))
+                throw new ArgumentException("One of the transports was null", nameof(transports));
+
 
             foreach (var t in transports)
             {
@@ -66,6 +70,12 @@ namespace CometD.NetCore.Client
             bayeuxClientState = new DisconnectedState(this, null);
         }
 
+        public BayeuxClient(string url, ILogger logger, params ClientTransport[] transports)
+            : this(url, transports)
+        {
+            this.logger = logger;
+        }
+
         #region AbstractClientSession overrides
 
         #region IClientSession
@@ -82,7 +92,9 @@ namespace CometD.NetCore.Client
             // Pick the first transport for the handshake, it will renegotiate if not right
             var initialTransport = transportRegistry.GetTransport(allowedTransports[0]);
             initialTransport.Init();
-            //Console.WriteLine("Using initial transport {0} from {1}", initialTransport.Name, Print.List(allowedTransports));
+
+            logger?.LogDebug(  $"Using initial transport {initialTransport.Name}"
+                             + $" from {Print.List(allowedTransports)}");
 
             UpdateBayeuxClientState(
                     delegate (BayeuxClientState oldState)
@@ -257,12 +269,7 @@ namespace CometD.NetCore.Client
 
         public virtual void OnFailure(Exception e, IList<IMessage> messages)
         {
-            //if (!(e is WebException) || ((WebException)e).Status != WebExceptionStatus.Timeout)
-            //{
-            // the normal flow of cometd long polling is to timeout after the configured timeout value
-            // and then reconnect again, so ignore those
-            Console.WriteLine("{0}", e);
-            //}
+            logger?.LogError($"{e}");
         }
 
         #endregion
@@ -307,7 +314,10 @@ namespace CometD.NetCore.Client
                     message.Id = NewMessageId();
                 }
 
-                //Console.WriteLine("Handshaking with extra fields {0}, transport {1}", Print.Dictionary(bayeuxClientState.handshakeFields), Print.Dictionary(bayeuxClientState.transport as IDictionary<string, object>));
+                logger?.LogDebug("Handshaking with extra fields {0}, transport {1}",
+                                 Print.Dictionary(bayeuxClientState.handshakeFields),
+                                 Print.Dictionary(bayeuxClientState.transport as IDictionary<string, object>));
+
                 bayeuxClientState.Send(handshakeListener, message);
                 return true;
             }
@@ -346,10 +356,10 @@ namespace CometD.NetCore.Client
                             });
 
                     // Signal the failure
-                    var error = "405:c" + transportRegistry.AllowedTransports + ",s" + serverTransports.ToString() + ":no transport";
-
                     handshake.Successful = false;
-                    handshake[MessageFields.ERROR_FIELD] = error;
+                    handshake[MessageFields.ERROR_FIELD] =
+                            $"405:c{transportRegistry.AllowedTransports},s{serverTransports}:no transport";
+
                     // TODO: also update the advice with reconnect=none for listeners ?
                 }
                 else
@@ -694,12 +704,13 @@ namespace CometD.NetCore.Client
                     message
                 };
                 var sent = SendMessages(messages);
-                //Console.WriteLine("{0} message {1}", sent?"Sent":"Failed", message);
+
+                logger?.LogDebug("{0} message {1}", sent ? "Sent":"Failed", message);
             }
             else
             {
                 messageQueue.Enqueue(message);
-                //Console.WriteLine("Enqueued message {0} (batching: {1})", message, this.Batching);
+                logger?.LogDebug($"Enqueued message {message} (batching: {Batching})");
             }
         }
 
@@ -730,7 +741,7 @@ namespace CometD.NetCore.Client
 
             if (!oldState.IsUpdateableTo(newState))
             {
-                //Console.WriteLine("State not updateable : {0} -> {1}", oldState, newState);
+                logger?.LogDebug($"State not updateable : {oldState} -> {newState}");
                 return;
             }
 

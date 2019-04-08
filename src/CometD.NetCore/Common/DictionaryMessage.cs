@@ -149,17 +149,11 @@ namespace CometD.NetCore.Common
 
         public static IList<IMutableMessage> ParseMessages(string content)
         {
-            IList<IDictionary<string, object>> dictionaryList = null;
-            try
-            {
-                dictionaryList = JsonConvert.DeserializeObject<IList<IDictionary<string, object>>>(content);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Exception when parsing json {0}", e);
-            }
+            // Will throw when unable to parse -- letting the consumer decide what to do about that.
+            var dictionaryList = JsonConvert.DeserializeObject<IList<IDictionary<string, object>>>(content);
 
-            IList<IMutableMessage> messages = new List<IMutableMessage>();
+            var messages = new List<IMutableMessage>();
+
             if (dictionaryList == null)
             {
                 return messages;
