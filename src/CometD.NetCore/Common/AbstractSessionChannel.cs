@@ -2,22 +2,32 @@
 using System.Collections.Generic;
 using CometD.NetCore.Bayeux;
 using CometD.NetCore.Bayeux.Client;
+using Microsoft.Extensions.Logging;
 
 namespace CometD.NetCore.Common
 {
     /// <summary> <p>A channel scoped to a {@link ClientSession}.</p></summary>
     public abstract class AbstractSessionChannel : IClientSessionChannel
     {
+        private readonly ILogger _logger;
+
         private Dictionary<string, object> _attributes = new Dictionary<string, object>();
         private List<IClientSessionChannelListener> _listeners = new List<IClientSessionChannelListener>();
         private int _subscriptionCount = 0;
         private List<IMessageListener> _subscriptions = new List<IMessageListener>();
 
         public long ReplayId { get; private set; }
+
         protected AbstractSessionChannel(ChannelId id, long replayId)
         {
             ReplayId = replayId;
             ChannelId = id;
+        }
+
+        protected AbstractSessionChannel(ChannelId id, long replayId, ILogger logger)
+            : this(id, replayId)
+        {
+            _logger = logger;
         }
 
         #region IClientSessionChannel
@@ -123,10 +133,9 @@ namespace CometD.NetCore.Common
                     {
                         ((IMessageListener)listener).OnMessage(this, message);
                     }
-                    catch (Exception x)
+                    catch (Exception e)
                     {
-                        Console.WriteLine("{0}", x);
-                        //logger.info(x);
+                        _logger?.LogError($"{e}");
                     }
                 }
             }
@@ -142,10 +151,9 @@ namespace CometD.NetCore.Common
                         {
                             ((IMessageListener)listener).OnMessage(this, message);
                         }
-                        catch (System.Exception x)
+                        catch (Exception e)
                         {
-                            Console.WriteLine("{0}", x);
-                            //logger.info(x);
+                            _logger?.LogError($"{e}");
                         }
                     }
                 }

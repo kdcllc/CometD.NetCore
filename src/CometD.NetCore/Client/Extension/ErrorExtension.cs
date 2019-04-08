@@ -1,13 +1,21 @@
 ﻿using System;
 using CometD.NetCore.Bayeux;
 using CometD.NetCore.Bayeux.Client;
+using Microsoft.Extensions.Logging;
 
 namespace CometD.NetCore.Client.Extension
 {
     public class ErrorExtension : IExtension
     {
+        private readonly ILogger logger;
+
         public ErrorExtension()
         {
+        }
+
+        public ErrorExtension(ILogger logger)
+        {
+            this.logger = logger;
         }
 
         public event EventHandler<string> ConnectionMessage;
@@ -46,7 +54,7 @@ namespace CometD.NetCore.Client.Extension
         /// </example>
         public bool ReceiveMeta(IClientSession session, IMutableMessage message)
         {
-            Console.WriteLine($"ReceiveMeta: {message}");
+            logger?.LogDebug($"ReceiveMeta: {message}");
 
             if (message.Successful)
             {
@@ -79,7 +87,7 @@ namespace CometD.NetCore.Client.Extension
 
         public bool SendMeta(IClientSession session, IMutableMessage message)
         {
-            Console.WriteLine($"SendMeta: {message}");
+            logger?.LogDebug($"SendMeta: {message}");
 
             return true;
         }
