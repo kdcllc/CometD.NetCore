@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netcoreapp2.2;netcoreapp3.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netstandard2.0;netcoreapp2.2;netcoreapp3.0</TargetFrameworks>
 		<RootNamespace>CometD.NetCore2</RootNamespace>
 		<PackageId>CometD.NetCore2</PackageId>
   </PropertyGroup>
@@ -14,9 +14,5 @@
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" />
 		<PackageReference Include="Newtonsoft.Json" />
   </ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="Properties\" />
-	</ItemGroup>
 
 </Project>

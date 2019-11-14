@@ -1,19 +1,19 @@
 <Project>
 
   <PropertyGroup>
-    <NetCoreCommonVersion>2.1.1</NetCoreCommonVersion>
+    <NetCoreCommonVersion>2.1</NetCoreCommonVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'netcoreapp2.1' Or '$(TargetFramework)' == 'netstandard2.0'">
-    <NetCoreCommonVersion>2.1.1</NetCoreCommonVersion>
+    <NetCoreCommonVersion>2.1</NetCoreCommonVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'netcoreapp2.2'">
-    <NetCoreCommonVersion>2.2.0</NetCoreCommonVersion>
+    <NetCoreCommonVersion>2.2</NetCoreCommonVersion>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(TargetFramework)' == 'netcoreapp3.0'">
-    <NetCoreCommonVersion>3.0.0-preview.19074.2</NetCoreCommonVersion>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'netcoreapp3.0' Or '$(TargetFramework)' == 'netstandard2.0'">
+    <NetCoreCommonVersion>3.0.0</NetCoreCommonVersion>
   </PropertyGroup>
 
   <ItemGroup Label="NetCore">
@@ -25,7 +25,7 @@
   </ItemGroup>
 
   <ItemGroup Label="Shared Libraries">
-    <PackageReference Update="Newtonsoft.Json" Version="12.0.1" />
+    <PackageReference Update="Newtonsoft.Json" Version="12.0.3" />
   </ItemGroup>
 
   <ItemGroup Label="SourceLink">
