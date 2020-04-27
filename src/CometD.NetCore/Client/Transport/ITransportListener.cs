@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+
 using CometD.NetCore.Bayeux;
 
 namespace CometD.NetCore.Client.Transport
@@ -53,7 +54,6 @@ namespace CometD.NetCore.Client.Transport
         /// because of an unexpected Bayeux server exception was thrown.
         /// </summary>
         /// <param name="info">Bayeux server error message.</param>
-        /// <param name="ex">The exception that caused the failure.</param>
         /// <param name="messages">The messages being sent.</param>
         void OnProtocolError(string info, IList<IMessage> messages);
     }

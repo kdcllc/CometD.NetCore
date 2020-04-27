@@ -4,7 +4,7 @@ using System.Text;
 
 namespace CometD.NetCore.Bayeux
 {
-    /// <summary> Holder of a channel ID broken into path segments</summary>
+    /// <summary> Holder of a channel ID broken into path segments.</summary>
     public class ChannelId
     {
         public const string WILD = "*";
@@ -15,11 +15,10 @@ namespace CometD.NetCore.Bayeux
         private readonly int _wild;
         private readonly string _parent;
 
-
         public ChannelId(string name)
         {
             _name = name;
-            if (name == null || name.Length == 0 || name[0] != '/' || "/".Equals(name))
+            if (string.IsNullOrEmpty(name) || name[0] != '/' || "/".Equals(name))
             {
                 throw new ArgumentException(name);
             }
@@ -28,7 +27,7 @@ namespace CometD.NetCore.Bayeux
 
             if (name[name.Length - 1] == '/')
             {
-                name = name.Substring(0, (name.Length - 1) - (0));
+                name = name.Substring(0, name.Length - 1 - 0);
             }
 
             _segments = name.Substring(1).Split('/');
@@ -51,6 +50,7 @@ namespace CometD.NetCore.Bayeux
 
                 wilds[_segments.Length - i] = b + "**";
             }
+
             wilds[0] = b + "*";
 
             _parent = _segments.Length == 1 ? null : b.ToString().Substring(0, b.Length - 1);
@@ -74,11 +74,11 @@ namespace CometD.NetCore.Bayeux
 
             if (_wild == 0)
             {
-                Wilds = (new List<string>(wilds)).AsReadOnly();
+                Wilds = new List<string>(wilds).AsReadOnly();
             }
             else
             {
-                Wilds = (new List<string>()).AsReadOnly();
+                Wilds = new List<string>().AsReadOnly();
             }
         }
 
@@ -123,7 +123,8 @@ namespace CometD.NetCore.Bayeux
         }
 
         /* ------------------------------------------------------------ */
-        /// <summary>Match channel IDs with wildcard support</summary>
+
+        /// <summary>Match channel IDs with wildcard support.</summary>
         /// <param name="name">
         /// </param>
         /// <returns> true if this channelID matches the passed channel ID. If this channel is wild, then matching is wild.
@@ -157,7 +158,6 @@ namespace CometD.NetCore.Bayeux
 
                     return true;
 
-
                 case 2:
                     if (name._segments.Length < _segments.Length)
                     {
@@ -174,6 +174,7 @@ namespace CometD.NetCore.Bayeux
 
                     return true;
             }
+
             return false;
         }
 
@@ -207,6 +208,7 @@ namespace CometD.NetCore.Bayeux
                     return false;
                 }
             }
+
             return true;
         }
 
@@ -225,6 +227,7 @@ namespace CometD.NetCore.Bayeux
                     return false;
                 }
             }
+
             return true;
         }
 
@@ -245,6 +248,10 @@ namespace CometD.NetCore.Bayeux
         }
 
         /* ------------------------------------------------------------ */
+
+        /// <summary>
+        /// List of Wilds channels.
+        /// </summary>
         /// <returns> The list of wilds channels that match this channel, or
         /// the empty list if this channel is already wild.
         /// </returns>
@@ -252,12 +259,12 @@ namespace CometD.NetCore.Bayeux
 
         public static bool IsMeta(string channelId)
         {
-            return channelId != null && channelId.StartsWith("/meta/");
+            return channelId?.StartsWith("/meta/") == true;
         }
 
         public static bool IsService(string channelId)
         {
-            return channelId != null && channelId.StartsWith("/service/");
+            return channelId?.StartsWith("/service/") == true;
         }
     }
 }

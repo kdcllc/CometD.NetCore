@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+
 using Newtonsoft.Json.Linq;
 
 namespace CometD.NetCore.Client.Transport
@@ -38,6 +39,7 @@ namespace CometD.NetCore.Client.Transport
                 {
                     newList.Add(key);
                 }
+
                 return newList.AsReadOnly();
             }
         }
@@ -68,6 +70,7 @@ namespace CometD.NetCore.Client.Transport
                     }
                 }
             }
+
             return list;
         }
 
@@ -107,8 +110,12 @@ namespace CometD.NetCore.Client.Transport
             {
                 foreach (var t in _transports)
                 {
-                    sb.AppendFormat(CultureInfo.InvariantCulture, "{0}    +- '{1}': {2}", Environment.NewLine,
-                        t.Key, t.Value.ToString().Replace(Environment.NewLine, Environment.NewLine + "       "));
+                    sb.AppendFormat(
+                        CultureInfo.InvariantCulture,
+                        "{0}    +- '{1}': {2}",
+                        Environment.NewLine,
+                        t.Key,
+                        t.Value.ToString().Replace(Environment.NewLine, Environment.NewLine + "       "));
                 }
             }
 

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+
 using CometD.NetCore.Bayeux;
 using CometD.NetCore.Bayeux.Client;
 
@@ -13,9 +14,8 @@ namespace CometD.NetCore.Client.Extension
         public bool Receive(IClientSession session, IMutableMessage message)
         {
             // can retrieve actual replay ids for messages here if needed.
-            //var ext = (Dictionary<string, object>)message.GetExt(false);
-            //var e = ext[Message_Fields.EVENT_FIELD];
-
+            // var ext = (Dictionary<string, object>)message.GetExt(false);
+            // var e = ext[Message_Fields.EVENT_FIELD];
             return true;
         }
 
@@ -26,7 +26,7 @@ namespace CometD.NetCore.Client.Extension
                 var ext = (Dictionary<string, object>)message.GetExt(false);
                 _serverSupportsReplay = ext != null && true.Equals(ext[EXTENSION_NAME]);
             }
-           
+
             return true;
         }
 
@@ -47,6 +47,7 @@ namespace CometD.NetCore.Client.Extension
 
                 message.GetExt(true)[EXTENSION_NAME] = value;
             }
+
             return true;
         }
     }

@@ -11,19 +11,28 @@ namespace CometD.NetCore.Bayeux
     /// </seealso>
     public interface IBayeux
     {
+        /// <summary>
+        /// KnownTransportNames.
+        /// </summary>
         /// <returns> the set of known transport names of this {@link Bayeux} object.
         /// </returns>
         /// <seealso cref="getAllowedTransports()">
         /// </seealso>
         ICollection<string> KnownTransportNames { get; }
 
-        /// <param name="transport">the transport name
+        /// <summary>
+        ///  GetTransport.
+        /// </summary>
+        /// <param name="transport">the transport name.
         /// </param>
         /// <returns> the transport with the given name or null
-        /// if no such transport exist
+        /// if no such transport exist.
         /// </returns>
         ITransport GetTransport(string transport);
 
+        /// <summary>
+        /// AllowedTransports.
+        /// </summary>
         /// <returns> the ordered list of transport names that will be used in the
         /// negotiation of transports with the other peer.
         /// </returns>
@@ -31,9 +40,12 @@ namespace CometD.NetCore.Bayeux
         /// </seealso>
         IList<string> AllowedTransports { get; }
 
-        /// <param name="qualifiedName">the configuration option name
+        /// <summary>
+        /// GetOption.
+        /// </summary>
+        /// <param name="qualifiedName">the configuration option name.
         /// </param>
-        /// <returns> the configuration option with the given {@code qualifiedName}
+        /// <returns> the configuration option with the given {@code qualifiedName}.
         /// </returns>
         /// <seealso cref="SetOption(string, object)">
         /// </seealso>
@@ -41,21 +53,30 @@ namespace CometD.NetCore.Bayeux
         /// </seealso>
         object GetOption(string qualifiedName);
 
-        /// <param name="qualifiedName">the configuration option name
+        /// <summary>
+        /// GetOption.
+        /// </summary>
+        /// <param name="qualifiedName">the configuration option name.
         /// </param>
-        /// <param name="value">the configuration option value
+        /// <param name="value">the configuration option value.
         /// </param>
         /// <seealso cref="GetOption(string)">
         /// </seealso>
         void SetOption(string qualifiedName, object value);
 
-        /// <returns> the set of configuration options
+        /// <summary>
+        /// OptionNames.
+        /// </summary>
+        /// <returns> the set of configuration options.
         /// </returns>
         /// <seealso cref="GetOption(string)">
         /// </seealso>
         ICollection<string> OptionNames { get; }
 
-        /// <returns> the set of configuration options
+        /// <summary>
+        /// GetOption.
+        /// </summary>
+        /// <returns> the set of configuration options.
         /// </returns>
         /// <seealso cref="GetOption(string)">
         /// </seealso>

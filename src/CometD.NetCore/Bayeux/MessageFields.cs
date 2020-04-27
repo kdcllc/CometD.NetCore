@@ -9,8 +9,6 @@
     /// allows this.</p>
     ///
     /// </summary>
-    /// <version>  $Revision: 1483 $ $Date: 2009-03-04 14:56:47 +0100 (Wed, 04 Mar 2009) $
-    /// </version>
     public static class MessageFields
     {
         public const string ADVICE_FIELD = "advice";

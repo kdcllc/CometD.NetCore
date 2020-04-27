@@ -8,19 +8,17 @@ namespace CometD.NetCore.Bayeux.Client
     /// and to initiate the communication with a Bayeux server(s).</p>
     ///
     /// </summary>
-    /// <version>  $Revision: 1483 $ $Date: 2009-03-04 14:56:47 +0100 (Wed, 04 Mar 2009) $
-    /// </version>
     public interface IClientSession : ISession
     {
         /// <summary> Adds an extension to this session.</summary>
-        /// <param name="extension">the extension to add
+        /// <param name="extension">the extension to add.
         /// </param>
         /// <seealso cref="RemoveExtension(IExtension)">
         /// </seealso>
         void AddExtension(IExtension extension);
 
         /// <summary> Removes an extension from this session.</summary>
-        /// <param name="extension">the extension to remove
+        /// <param name="extension">the extension to remove.
         /// </param>
         /// <seealso cref="AddExtension(IExtension)">
         /// </seealso>

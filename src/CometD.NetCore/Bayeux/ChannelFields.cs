@@ -1,6 +1,6 @@
 ﻿namespace CometD.NetCore.Bayeux
 {
-    public class ChannelFields
+    public sealed class ChannelFields
     {
         public const string META = "/meta";
         public const string META_CONNECT = META + "/connect";

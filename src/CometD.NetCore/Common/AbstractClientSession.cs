@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading;
+
 using CometD.NetCore.Bayeux;
 using CometD.NetCore.Bayeux.Client;
 
@@ -10,26 +13,23 @@ namespace CometD.NetCore.Common
     /// </summary>
     public abstract class AbstractClientSession : IClientSession
     {
-        private Dictionary<string, object> _attributes = new Dictionary<string, object>();
+        private readonly ConcurrentDictionary<string, object> _attributes = new ConcurrentDictionary<string, object>();
+        private readonly ThreadSafeList<IExtension> _extensions = new ThreadSafeList<IExtension>();
         private int _batch;
-        // @@ax: WARNING Should implement thread safety, as in http://msdn.microsoft.com/en-us/library/3azh197k.aspx
-        private List<IExtension> _extensions = new List<IExtension>();
-        private int _idGen = 0;
-
-        #region IClientSession
+        private int _idGen;
 
         public void AddExtension(IExtension extension)
         {
             _extensions.Add(extension);
         }
-        
+
         public void RemoveExtension(IExtension extension)
         {
             _extensions.Remove(extension);
         }
 
         public abstract void Handshake();
-        
+
         public abstract void Handshake(IDictionary<string, object> template);
 
         public IClientSessionChannel GetChannel(string channelId)
@@ -61,12 +61,10 @@ namespace CometD.NetCore.Common
                     channel = new_channel;
                 }
             }
+
             return channel;
         }
 
-        #endregion
-
-        #region ISession
         public ICollection<string> AttributeNames => _attributes.Keys;
 
         public abstract bool Connected { get; }
@@ -92,14 +90,15 @@ namespace CometD.NetCore.Common
 
         public bool EndBatch()
         {
-            if (--_batch == 0)
+            if (Interlocked.Decrement(ref _batch) == 0)
             {
                 SendBatch();
                 return true;
             }
+
             return false;
         }
-        
+
         public object GetAttribute(string name)
         {
             _attributes.TryGetValue(name, out var obj);
@@ -111,7 +110,12 @@ namespace CometD.NetCore.Common
             try
             {
                 var old = _attributes[name];
-                _attributes.Remove(name);
+
+                if (_attributes.TryRemove(name, out var va))
+                {
+                    return va;
+                }
+
                 return old;
             }
             catch (Exception)
@@ -127,11 +131,9 @@ namespace CometD.NetCore.Common
 
         public void StartBatch()
         {
-            _batch++;
+            Interlocked.Increment(ref _batch);
         }
 
-        #endregion
-        
         protected bool Batching => _batch > 0;
 
         protected Dictionary<string, AbstractSessionChannel> Channels { get; } = new Dictionary<string, AbstractSessionChannel>();
@@ -141,8 +143,6 @@ namespace CometD.NetCore.Common
         /// and the channel {@link ClientSessionChannel.ClientSessionChannelListener listeners}.</p>
         /// </summary>
         /// <param name="message">the message received.
-        /// </param>
-        /// <param name="mutable">the mutable version of the message received
         /// </param>
         public void Receive(IMutableMessage message)
         {
@@ -172,7 +172,7 @@ namespace CometD.NetCore.Common
                 }
             }
         }
-        
+
         public void ResetSubscriptions()
         {
             foreach (var channel in Channels)
@@ -180,7 +180,7 @@ namespace CometD.NetCore.Common
                 channel.Value.ResetSubscriptions();
             }
         }
-        
+
         protected bool ExtendReceive(IMutableMessage message)
         {
             if (message.Meta)
@@ -203,6 +203,7 @@ namespace CometD.NetCore.Common
                     }
                 }
             }
+
             return true;
         }
 
@@ -228,6 +229,7 @@ namespace CometD.NetCore.Common
                     }
                 }
             }
+
             return true;
         }
 
@@ -237,7 +239,7 @@ namespace CometD.NetCore.Common
 
         protected string NewMessageId()
         {
-            return Convert.ToString(_idGen++);
+            return Convert.ToString(Interlocked.Increment(ref _idGen));
         }
 
         protected abstract void SendBatch();

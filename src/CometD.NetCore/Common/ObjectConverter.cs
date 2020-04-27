@@ -65,6 +65,7 @@ namespace CometD.NetCore.Common
             {
                 R.Add(m);
             }
+
             return R;
         }
 
@@ -75,6 +76,7 @@ namespace CometD.NetCore.Common
             {
                 R.Add(m);
             }
+
             return R;
         }
 

@@ -11,20 +11,24 @@
     /// </pre>
     ///
     /// </summary>
-    /// <version>  $Revision: 1295 $ $Date: 2010-06-18 11:57:20 +0200 (Fri, 18 Jun 2010) $
-    /// </version>
     public interface IClientSessionChannel : IChannel
     {
-        /// <returns> the client session associated with this channel
+        /// <summary>
+        /// The Session Instance.
+        /// </summary>
+        /// <returns> the client session associated with this channel.
         /// </returns>
         IClientSession Session { get; }
 
-        /// <param name="listener">the listener to add
+        /// <summary>
+        /// Adds Client Session Channel Listener.
+        /// </summary>
+        /// <param name="listener">the listener to add.
         /// </param>
         void AddListener(IClientSessionChannelListener listener);
 
         /// <summary> Equivalent to {@link #publish(Object, Object) publish(data, null)}.</summary>
-        /// <param name="data">the data to publish
+        /// <param name="data">the data to publish.
         /// </param>
         void Publish(object data);
 
@@ -32,7 +36,7 @@
         /// optionally specifying the {@code messageId} to set on the
         /// publish message.
         /// </summary>
-        /// <param name="data">the data to publish
+        /// <param name="data">the data to publish.
         /// </param>
         /// <param name="messageId">the message id to set on the message, or null to let the
         /// implementation choose the message id.
@@ -41,7 +45,10 @@
         /// </seealso>
         void Publish(object data, string messageId);
 
-        /// <param name="listener">the listener to remove
+        /// <summary>
+        /// Removes Client Session Channel Listener.
+        /// </summary>
+        /// <param name="listener">the listener to remove.
         /// </param>
         void RemoveListener(IClientSessionChannelListener listener);
 

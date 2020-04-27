@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+
 using CometD.NetCore.Bayeux;
 
 namespace CometD.NetCore.Common
@@ -34,6 +35,7 @@ namespace CometD.NetCore.Common
                         names.Add(name);
                     }
                 }
+
                 return names;
             }
         }

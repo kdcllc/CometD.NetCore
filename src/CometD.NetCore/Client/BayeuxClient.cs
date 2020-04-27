@@ -4,81 +4,87 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Timers;
+
 using CometD.NetCore.Bayeux;
 using CometD.NetCore.Bayeux.Client;
 using CometD.NetCore.Client.Transport;
 using CometD.NetCore.Common;
+
 using Microsoft.Extensions.Logging;
+
 using Newtonsoft.Json.Linq;
 
 namespace CometD.NetCore.Client
 {
     public class BayeuxClient : AbstractClientSession, IBayeux
     {
-        private readonly ILogger logger;
+        private static readonly Mutex StateUpdateInProgressMutex = new Mutex();
 
-        //private static ILogger<BayeuxClient> = new LoggerFactory()
+        private readonly ILogger _logger;
+
+        private readonly TransportRegistry _transportRegistry = new TransportRegistry();
+        private readonly Dictionary<string, object> _options = new Dictionary<string, object>();
+        private readonly Queue<IMutableMessage> _messageQueue = new Queue<IMutableMessage>();
+        private readonly CookieCollection _cookieCollection = new CookieCollection();
+        private readonly ITransportListener _handshakeListener;
+        private readonly ITransportListener _connectListener;
+        private readonly ITransportListener _disconnectListener;
+        private readonly ITransportListener _publishListener;
+        private readonly AutoResetEvent _stateChanged = new AutoResetEvent(false);
+
+        private BayeuxClientState _bayeuxClientState;
+        private int _stateUpdateInProgress;
+
         public const string BACKOFF_INCREMENT_OPTION = "backoffIncrement";
         public const string MAX_BACKOFF_OPTION = "maxBackoff";
         public const string BAYEUX_VERSION = "1.0";
 
-        private readonly TransportRegistry transportRegistry = new TransportRegistry();
-        private readonly Dictionary<string, object> options = new Dictionary<string, object>();
-        private BayeuxClientState bayeuxClientState;
-        private readonly Queue<IMutableMessage> messageQueue = new Queue<IMutableMessage>();
-        private readonly CookieCollection cookieCollection = new CookieCollection();
-        private readonly ITransportListener handshakeListener;
-        private readonly ITransportListener connectListener;
-        private readonly ITransportListener disconnectListener;
-        private readonly ITransportListener publishListener;
-        private static readonly Mutex StateUpdateInProgressMutex = new Mutex();
-        private int stateUpdateInProgress;
-        private readonly AutoResetEvent stateChanged = new AutoResetEvent(false);
-
         public BayeuxClient(string url, params ClientTransport[] transports)
         {
-            handshakeListener = new HandshakeTransportListener(this);
-            connectListener = new ConnectTransportListener(this);
-            disconnectListener = new DisconnectTransportListener(this);
-            publishListener = new PublishTransportListener(this);
+            _handshakeListener = new HandshakeTransportListener(this);
+            _connectListener = new ConnectTransportListener(this);
+            _disconnectListener = new DisconnectTransportListener(this);
+            _publishListener = new PublishTransportListener(this);
 
             if (transports == null)
+            {
                 throw new ArgumentNullException(nameof(transports));
+            }
 
             if (transports.Length == 0)
+            {
                 throw new ArgumentException("No transports provided", nameof(transports));
+            }
 
             if (transports.Any(t => t == null))
+            {
                 throw new ArgumentException("One of the transports was null", nameof(transports));
-
+            }
 
             foreach (var t in transports)
             {
-                transportRegistry.Add(t);
+                _transportRegistry.Add(t);
             }
 
-            foreach (var transportName in transportRegistry.KnownTransports)
+            foreach (var transportName in _transportRegistry.KnownTransports)
             {
-                var clientTransport = transportRegistry.GetTransport(transportName);
+                var clientTransport = _transportRegistry.GetTransport(transportName);
                 if (clientTransport is HttpClientTransport httpTransport)
                 {
                     httpTransport.Url = url;
-                    httpTransport.SetCookieCollection(cookieCollection);
+                    httpTransport.SetCookieCollection(_cookieCollection);
                 }
             }
 
-            bayeuxClientState = new DisconnectedState(this, null);
+            _bayeuxClientState = new DisconnectedState(this, null);
         }
 
         public BayeuxClient(string url, ILogger logger, params ClientTransport[] transports)
             : this(url, transports)
         {
-            this.logger = logger;
+            _logger = logger;
         }
 
-        #region AbstractClientSession overrides
-
-        #region IClientSession
         public override void Handshake()
         {
             Handshake(null);
@@ -89,45 +95,38 @@ namespace CometD.NetCore.Client
             Initialize();
 
             var allowedTransports = AllowedTransports;
+
             // Pick the first transport for the handshake, it will renegotiate if not right
-            var initialTransport = transportRegistry.GetTransport(allowedTransports[0]);
+            var initialTransport = _transportRegistry.GetTransport(allowedTransports[0]);
             initialTransport.Init();
 
-            logger?.LogDebug(  $"Using initial transport {initialTransport.Name}"
+            _logger?.LogDebug($"Using initial transport {initialTransport.Name}"
                              + $" from {Print.List(allowedTransports)}");
 
-            UpdateBayeuxClientState(
-                    delegate (BayeuxClientState oldState)
-                    {
-                        return new HandshakingState(this, handshakeFields, initialTransport);
-                    });
+            UpdateBayeuxClientState(oldState => new HandshakingState(this, handshakeFields, initialTransport));
         }
-        #endregion
 
-        #region ISession
-        public override bool Connected => IsConnected(bayeuxClientState);
+        public override bool Connected => IsConnected(_bayeuxClientState);
 
-        public override bool Handshook => IsHandshook(bayeuxClientState);
+        public override bool Handshook => IsHandshook(_bayeuxClientState);
 
-        public override string Id => bayeuxClientState.clientId;
+        public override string Id => _bayeuxClientState.ClientId;
 
         public override void Disconnect()
         {
             UpdateBayeuxClientState(
-                    delegate (BayeuxClientState oldState)
+                    oldState =>
                     {
                         if (IsConnected(oldState))
                         {
-                            return new DisconnectingState(this, oldState.transport, oldState.clientId);
+                            return new DisconnectingState(this, oldState.Transport, oldState.ClientId);
                         }
                         else
                         {
-                            return new DisconnectedState(this, oldState.transport);
+                            return new DisconnectedState(this, oldState.Transport);
                         }
                     });
         }
-
-        #endregion
 
         protected override AbstractSessionChannel NewChannel(ChannelId channelId, long replayId)
         {
@@ -143,7 +142,7 @@ namespace CometD.NetCore.Client
 
         protected override void SendBatch()
         {
-            var bayeuxClientState = this.bayeuxClientState;
+            var bayeuxClientState = _bayeuxClientState;
             if (IsHandshaking(bayeuxClientState))
             {
                 return;
@@ -156,63 +155,46 @@ namespace CometD.NetCore.Client
             }
         }
 
-        #endregion
+        /// <inheritdoc/>
+        public ICollection<string> KnownTransportNames => _transportRegistry.KnownTransports;
 
-        #region IBayeux
-
-        ///<inheritdoc/>
-        public ICollection<string> KnownTransportNames => transportRegistry.KnownTransports;
-
-        ///<inheritdoc/>
+        /// <inheritdoc/>
         public ITransport GetTransport(string transport)
         {
-            return transportRegistry.GetTransport(transport);
+            return _transportRegistry.GetTransport(transport);
         }
 
-        ///<inheritdoc/>
-        public IList<string> AllowedTransports => transportRegistry.AllowedTransports;
+        /// <inheritdoc/>
+        public IList<string> AllowedTransports => _transportRegistry.AllowedTransports;
 
-        #region Option
-
-        ///<inheritdoc/>
+        /// <inheritdoc/>
         public object GetOption(string qualifiedName)
         {
-            options.TryGetValue(qualifiedName, out var obj);
+            _options.TryGetValue(qualifiedName, out var obj);
             return obj;
         }
 
-        ///<inheritdoc/>
+        /// <inheritdoc/>
         public void SetOption(string qualifiedName, object val)
         {
-            options[qualifiedName] = val;
+            _options[qualifiedName] = val;
         }
 
-        ///<inheritdoc/>
-        public ICollection<string> OptionNames => options.Keys;
+        /// <inheritdoc/>
+        public ICollection<string> OptionNames => _options.Keys;
 
-        ///<inheritdoc/>
-        public IDictionary<string, object> Options => options;
+        /// <inheritdoc/>
+        public IDictionary<string, object> Options => _options;
 
-        #endregion
-
-        #endregion
-
-        #region Public Properties
         public long BackoffIncrement { get; private set; }
 
         public long MaxBackoff { get; private set; }
 
+        public bool Disconnected => IsDisconnected(_bayeuxClientState);
 
-
-        public bool Disconnected => IsDisconnected(bayeuxClientState);
-
-
-        #endregion
-
-        #region Cookie
         public string GetCookie(string name)
         {
-            var cookie = cookieCollection[name];
+            var cookie = _cookieCollection[name];
             if (cookie != null)
             {
                 return cookie.Value;
@@ -234,11 +216,10 @@ namespace CometD.NetCore.Client
                 cookie.Expires = DateTime.Now;
                 cookie.Expires.AddMilliseconds(maxAge);
             }
-            cookieCollection.Add(cookie);
-        }
-        #endregion
 
-        #region ITransportListener
+            _cookieCollection.Add(cookie);
+        }
+
         public void OnSending(IList<IMessage> messages)
         {
         }
@@ -265,16 +246,11 @@ namespace CometD.NetCore.Client
             }
         }
 
-
-
         public virtual void OnFailure(Exception e, IList<IMessage> messages)
         {
-            logger?.LogError($"{e}");
+            _logger?.LogError($"{e}");
         }
 
-        #endregion
-
-        #region Handshake
         public State Handshake(int waitMs)
         {
             return Handshake(null, waitMs);
@@ -293,14 +269,14 @@ namespace CometD.NetCore.Client
 
         protected bool SendHandshake()
         {
-            var bayeuxClientState = this.bayeuxClientState;
+            var bayeuxClientState = _bayeuxClientState;
 
             if (IsHandshaking(bayeuxClientState))
             {
                 var message = NewMessage();
-                if (bayeuxClientState.handshakeFields != null)
+                if (bayeuxClientState.HandshakeFields != null)
                 {
-                    foreach (var kvp in bayeuxClientState.handshakeFields)
+                    foreach (var kvp in bayeuxClientState.HandshakeFields)
                     {
                         message.Add(kvp.Key, kvp.Value);
                     }
@@ -308,30 +284,35 @@ namespace CometD.NetCore.Client
 
                 message.Channel = ChannelFields.META_HANDSHAKE;
                 message[MessageFields.SUPPORTED_CONNECTION_TYPES_FIELD] = AllowedTransports;
-                message[MessageFields.VERSION_FIELD] = BayeuxClient.BAYEUX_VERSION;
+                message[MessageFields.VERSION_FIELD] = BAYEUX_VERSION;
                 if (message.Id == null)
                 {
                     message.Id = NewMessageId();
                 }
 
-                logger?.LogDebug("Handshaking with extra fields {0}, transport {1}",
-                                 Print.Dictionary(bayeuxClientState.handshakeFields),
-                                 Print.Dictionary(bayeuxClientState.transport as IDictionary<string, object>));
+                _logger?.LogDebug(
+                    "Handshaking with extra fields {0}, transport {1}",
+                    Print.Dictionary(bayeuxClientState.HandshakeFields),
+                    Print.Dictionary(bayeuxClientState.Transport as IDictionary<string, object>));
 
-                bayeuxClientState.Send(handshakeListener, message);
+                bayeuxClientState.Send(_handshakeListener, message);
                 return true;
             }
+
             return false;
         }
 
         private bool IsHandshaking(BayeuxClientState bayeuxClientState)
         {
-            return bayeuxClientState.type == State.HANDSHAKING || bayeuxClientState.type == State.REHANDSHAKING;
+            return bayeuxClientState.TypeValue == State.HANDSHAKING
+                || bayeuxClientState.TypeValue == State.REHANDSHAKING;
         }
 
         private bool IsHandshook(BayeuxClientState bayeuxClientState)
         {
-            return bayeuxClientState.type == State.CONNECTING || bayeuxClientState.type == State.CONNECTED || bayeuxClientState.type == State.UNCONNECTED;
+            return bayeuxClientState.TypeValue == State.CONNECTING
+                || bayeuxClientState.TypeValue == State.CONNECTED
+                || bayeuxClientState.TypeValue == State.UNCONNECTED;
         }
 
         protected void ProcessHandshake(IMutableMessage handshake)
@@ -341,93 +322,80 @@ namespace CometD.NetCore.Client
                 var serverTransportObject = handshake[MessageFields.SUPPORTED_CONNECTION_TYPES_FIELD] as JArray;
                 var serverTransports = serverTransportObject as IEnumerable<object>;
 
-                var negotiatedTransports = transportRegistry.Negotiate(serverTransports, BAYEUX_VERSION);
+                var negotiatedTransports = _transportRegistry.Negotiate(serverTransports, BAYEUX_VERSION);
                 var newTransport = negotiatedTransports.Count == 0 ? null : negotiatedTransports[0];
                 if (newTransport == null)
                 {
                     UpdateBayeuxClientState(
-                            delegate (BayeuxClientState oldState)
-                            {
-                                return new DisconnectedState(this, oldState.transport);
-                            },
-                            delegate ()
-                            {
-                                Receive(handshake);
-                            });
+                            oldState => new DisconnectedState(this, oldState.Transport),
+                            () => Receive(handshake));
 
                     // Signal the failure
                     handshake.Successful = false;
                     handshake[MessageFields.ERROR_FIELD] =
-                            $"405:c{transportRegistry.AllowedTransports},s{serverTransports}:no transport";
+                            $"405:c{_transportRegistry.AllowedTransports},s{serverTransports}:no transport";
 
                     // TODO: also update the advice with reconnect=none for listeners ?
                 }
                 else
                 {
                     UpdateBayeuxClientState(
-                            delegate (BayeuxClientState oldState)
+                            oldState =>
                             {
-                                if (newTransport != oldState.transport)
+                                if (newTransport != oldState.Transport)
                                 {
-                                    oldState.transport.Reset();
+                                    oldState.Transport.Reset();
                                     newTransport.Init();
                                 }
 
                                 var action = GetAdviceAction(handshake.Advice, MessageFields.RECONNECT_RETRY_VALUE);
                                 if (MessageFields.RECONNECT_RETRY_VALUE.Equals(action))
                                 {
-                                    return new ConnectingState(this, oldState.handshakeFields, handshake.Advice, newTransport, handshake.ClientId);
+                                    return new ConnectingState(
+                                        this,
+                                        oldState.HandshakeFields,
+                                        handshake.Advice,
+                                        newTransport,
+                                        handshake.ClientId);
                                 }
                                 else if (MessageFields.RECONNECT_NONE_VALUE.Equals(action))
                                 {
-                                    return new DisconnectedState(this, oldState.transport);
+                                    return new DisconnectedState(this, oldState.Transport);
                                 }
 
                                 return null;
                             },
-                            delegate ()
-                            {
-                                Receive(handshake);
-                            });
+                            () => Receive(handshake));
                 }
             }
             else
             {
                 UpdateBayeuxClientState(
-                        delegate (BayeuxClientState oldState)
+                        oldState =>
                         {
                             var action = GetAdviceAction(handshake.Advice, MessageFields.RECONNECT_HANDSHAKE_VALUE);
-                            if (MessageFields.RECONNECT_HANDSHAKE_VALUE.Equals(action) || MessageFields.RECONNECT_RETRY_VALUE.Equals(action))
+                            if (MessageFields.RECONNECT_HANDSHAKE_VALUE.Equals(action)
+                                || MessageFields.RECONNECT_RETRY_VALUE.Equals(action))
                             {
-                                return new RehandshakingState(this, oldState.handshakeFields, oldState.transport, oldState.NextBackoff());
+                                return new RehandshakingState(this, oldState.HandshakeFields, oldState.Transport, oldState.NextBackoff());
                             }
                             else if (MessageFields.RECONNECT_NONE_VALUE.Equals(action))
                             {
-                                return new DisconnectedState(this, oldState.transport);
+                                return new DisconnectedState(this, oldState.Transport);
                             }
 
                             return null;
                         },
-                        delegate ()
-                        {
-                            Receive(handshake);
-                        });
+                        () => Receive(handshake));
             }
         }
 
         protected bool ScheduleHandshake(long interval, long backoff)
         {
-            return ScheduleAction(
-                    delegate (object sender, ElapsedEventArgs e)
-                    {
-                        SendHandshake();
-                    }
-                    , interval, backoff);
+            return ScheduleAction((sender, e) => SendHandshake(), interval, backoff);
         }
 
-        #endregion
-
-        protected State CurrentState => bayeuxClientState.type;
+        protected State CurrentState => _bayeuxClientState.TypeValue;
 
         public State WaitFor(int waitMs, ICollection<State> states)
         {
@@ -440,9 +408,9 @@ namespace CometD.NetCore.Client
                 return s;
             }
 
-            while (stateChanged.WaitOne(duration))
+            while (_stateChanged.WaitOne(duration))
             {
-                if (stateUpdateInProgress == 0)
+                if (_stateUpdateInProgress == 0)
                 {
                     s = CurrentState;
                     if (states.Contains(s))
@@ -469,29 +437,31 @@ namespace CometD.NetCore.Client
 
         protected bool SendConnect()
         {
-            var bayeuxClientState = this.bayeuxClientState;
+            var bayeuxClientState = _bayeuxClientState;
             if (IsHandshook(bayeuxClientState))
             {
                 var message = NewMessage();
                 message.Channel = ChannelFields.META_CONNECT;
-                message[MessageFields.CONNECTION_TYPE_FIELD] = bayeuxClientState.transport.Name;
-                if (bayeuxClientState.type == State.CONNECTING || bayeuxClientState.type == State.UNCONNECTED)
+                message[MessageFields.CONNECTION_TYPE_FIELD] = bayeuxClientState.Transport.Name;
+                if (bayeuxClientState.TypeValue == State.CONNECTING || bayeuxClientState.TypeValue == State.UNCONNECTED)
                 {
                     // First connect after handshake or after failure, add advice
                     message.GetAdvice(true)["timeout"] = 0;
                 }
-                bayeuxClientState.Send(connectListener, message);
+
+                bayeuxClientState.Send(_connectListener, message);
                 return true;
             }
+
             return false;
         }
 
         protected bool SendMessages(IList<IMutableMessage> messages)
         {
-            var bayeuxClientState = this.bayeuxClientState;
-            if (bayeuxClientState.type == State.CONNECTING || IsConnected(bayeuxClientState))
+            var bayeuxClientState = _bayeuxClientState;
+            if (bayeuxClientState.TypeValue == State.CONNECTING || IsConnected(bayeuxClientState))
             {
-                bayeuxClientState.Send(publishListener, messages);
+                bayeuxClientState.Send(_publishListener, messages);
                 return true;
             }
             else
@@ -505,10 +475,10 @@ namespace CometD.NetCore.Client
         {
             get
             {
-                var value = messageQueue.Count;
+                var value = _messageQueue.Count;
 
-                var state = bayeuxClientState;
-                if (state.transport is ClientTransport clientTransport)
+                var state = _bayeuxClientState;
+                if (state.Transport is ClientTransport clientTransport)
                 {
                     value += clientTransport.IsSending ? 1 : 0;
                 }
@@ -518,10 +488,10 @@ namespace CometD.NetCore.Client
         }
 
         /// <summary>
-        /// Wait for send queue to be emptied
+        /// Wait for send queue to be emptied.
         /// </summary>
         /// <param name="timeoutMS"></param>
-        /// <returns>true if queue is empty, false if timed out</returns>
+        /// <returns>true if queue is empty, false if timed out.</returns>
         public bool WaitForEmptySendQueue(int timeoutMS)
         {
             if (PendingMessages == 0)
@@ -546,28 +516,24 @@ namespace CometD.NetCore.Client
 
         public void Abort()
         {
-            UpdateBayeuxClientState(
-                    delegate (BayeuxClientState oldState)
-                    {
-                        return new AbortedState(this, oldState.transport);
-                    });
+            UpdateBayeuxClientState(oldState => new AbortedState(this, oldState.Transport));
         }
 
         private IList<IMutableMessage> TakeMessages()
         {
-            IList<IMutableMessage> queue = new List<IMutableMessage>(messageQueue);
-            messageQueue.Clear();
+            IList<IMutableMessage> queue = new List<IMutableMessage>(_messageQueue);
+            _messageQueue.Clear();
             return queue;
         }
 
         private bool IsConnected(BayeuxClientState bayeuxClientState)
         {
-            return bayeuxClientState.type == State.CONNECTED;
+            return bayeuxClientState.TypeValue == State.CONNECTED;
         }
 
         private bool IsDisconnected(BayeuxClientState bayeuxClientState)
         {
-            return bayeuxClientState.type == State.DISCONNECTING || bayeuxClientState.type == State.DISCONNECTED;
+            return bayeuxClientState.TypeValue == State.DISCONNECTING || bayeuxClientState.TypeValue == State.DISCONNECTED;
         }
 
         protected void ProcessConnect(IMutableMessage connect)
@@ -578,7 +544,7 @@ namespace CometD.NetCore.Client
                         var advice = connect.Advice;
                         if (advice == null)
                         {
-                            advice = oldState.advice;
+                            advice = oldState.Advice;
                         }
 
                         var action = GetAdviceAction(advice, MessageFields.RECONNECT_RETRY_VALUE);
@@ -586,64 +552,57 @@ namespace CometD.NetCore.Client
                         {
                             if (MessageFields.RECONNECT_RETRY_VALUE.Equals(action))
                             {
-                                return new ConnectedState(this, oldState.handshakeFields, advice, oldState.transport, oldState.clientId);
+                                return new ConnectedState(this, oldState.HandshakeFields, advice, oldState.Transport, oldState.ClientId);
                             }
                             else if (MessageFields.RECONNECT_NONE_VALUE.Equals(action))
                             {
                                 // This case happens when the connect reply arrives after a disconnect
                                 // We do not go into a disconnected state to allow normal processing of the disconnect reply
-                                return new DisconnectingState(this, oldState.transport, oldState.clientId);
+                                return new DisconnectingState(this, oldState.Transport, oldState.ClientId);
                             }
                         }
                         else
                         {
                             if (MessageFields.RECONNECT_HANDSHAKE_VALUE.Equals(action))
                             {
-                                return new RehandshakingState(this, oldState.handshakeFields, oldState.transport, 0);
+                                return new RehandshakingState(this, oldState.HandshakeFields, oldState.Transport, 0);
                             }
                             else if (MessageFields.RECONNECT_RETRY_VALUE.Equals(action))
                             {
-                                return new UnconnectedState(this, oldState.handshakeFields, advice, oldState.transport, oldState.clientId, oldState.NextBackoff());
+                                return new UnconnectedState(this, oldState.HandshakeFields, advice, oldState.Transport, oldState.ClientId, oldState.NextBackoff());
                             }
                             else if (MessageFields.RECONNECT_NONE_VALUE.Equals(action))
                             {
-                                return new DisconnectedState(this, oldState.transport);
+                                return new DisconnectedState(this, oldState.Transport);
                             }
                         }
 
                         return null;
                     },
-                delegate ()
-                {
-                    Receive(connect);
+                    () =>
+                    {
+                        Receive(connect);
                 });
         }
 
         protected void ProcessDisconnect(IMutableMessage disconnect)
         {
             UpdateBayeuxClientState(
-                    delegate (BayeuxClientState oldState)
-                    {
-                        return new DisconnectedState(this, oldState.transport);
-                    },
-                    delegate ()
-                    {
-                        Receive(disconnect);
-                    });
+                    oldState => new DisconnectedState(this, oldState.Transport),
+                    () => Receive(disconnect));
         }
 
         protected void ProcessMessage(IMutableMessage message)
         {
-            // logger.debug("Processing message {}", message);
             Receive(message);
         }
 
         private string GetAdviceAction(IDictionary<string, object> advice, string defaultResult)
         {
             var action = defaultResult;
-            if (advice != null && advice.ContainsKey(MessageFields.RECONNECT_FIELD))
+            if (advice?.ContainsKey(MessageFields.RECONNECT_FIELD) == true)
             {
-                action = ((string)advice[MessageFields.RECONNECT_FIELD]);
+                action = (string)advice[MessageFields.RECONNECT_FIELD];
             }
 
             return action;
@@ -651,17 +610,12 @@ namespace CometD.NetCore.Client
 
         protected bool ScheduleConnect(long interval, long backoff)
         {
-            return ScheduleAction(
-                    delegate (object sender, ElapsedEventArgs e)
-                    {
-                        SendConnect();
-                    }
-                    , interval, backoff);
+            return ScheduleAction((object sender, ElapsedEventArgs e) => SendConnect(), interval, backoff);
         }
 
         private bool ScheduleAction(ElapsedEventHandler action, long interval, long backoff)
         {
-            var timer = new System.Timers.Timer(); // @@ax: What about support for multiple timers?
+            var timer = new System.Timers.Timer();
             timer.Elapsed += action;
             var wait = interval + backoff;
             if (wait <= 0)
@@ -677,11 +631,9 @@ namespace CometD.NetCore.Client
 
         protected void Initialize()
         {
-            var backoffIncrement = ObjectConverter.ToInt64(GetOption(BACKOFF_INCREMENT_OPTION), 1000L);
-            BackoffIncrement = backoffIncrement;
+            BackoffIncrement = ObjectConverter.ToInt64(GetOption(BACKOFF_INCREMENT_OPTION), 1000L);
 
-            var maxBackoff = ObjectConverter.ToInt64(GetOption(MAX_BACKOFF_OPTION), 30000L);
-            MaxBackoff = maxBackoff;
+            MaxBackoff = ObjectConverter.ToInt64(GetOption(MAX_BACKOFF_OPTION), 30000L);
         }
 
         protected void Terminate()
@@ -705,18 +657,18 @@ namespace CometD.NetCore.Client
                 };
                 var sent = SendMessages(messages);
 
-                logger?.LogDebug("{0} message {1}", sent ? "Sent":"Failed", message);
+                _logger?.LogDebug("{0} message {1}", sent ? "Sent" : "Failed", message);
             }
             else
             {
-                messageQueue.Enqueue(message);
-                logger?.LogDebug($"Enqueued message {message} (batching: {Batching})");
+                _messageQueue.Enqueue(message);
+                _logger?.LogDebug($"Enqueued message {message} (batching: {Batching})");
             }
         }
 
         private bool CanSend()
         {
-            return !IsDisconnected(bayeuxClientState) && !Batching && !IsHandshaking(bayeuxClientState);
+            return !IsDisconnected(_bayeuxClientState) && !Batching && !IsHandshaking(_bayeuxClientState);
         }
 
         private void UpdateBayeuxClientState(BayeuxClientStateUpdater_createDelegate create)
@@ -724,16 +676,16 @@ namespace CometD.NetCore.Client
             UpdateBayeuxClientState(create, null);
         }
 
-        private void UpdateBayeuxClientState(BayeuxClientStateUpdater_createDelegate create, BayeuxClientStateUpdater_postCreateDelegate postCreate)
+        private void UpdateBayeuxClientState(
+            BayeuxClientStateUpdater_createDelegate create,
+            BayeuxClientStateUpdater_postCreateDelegate postCreate)
         {
             StateUpdateInProgressMutex.WaitOne();
-            ++stateUpdateInProgress;
+            ++_stateUpdateInProgress;
             StateUpdateInProgressMutex.ReleaseMutex();
+            var oldState = _bayeuxClientState;
 
-            BayeuxClientState newState = null;
-            var oldState = bayeuxClientState;
-
-            newState = create(oldState);
+            var newState = create(oldState);
             if (newState == null)
             {
                 throw new SystemException();
@@ -741,11 +693,11 @@ namespace CometD.NetCore.Client
 
             if (!oldState.IsUpdateableTo(newState))
             {
-                logger?.LogDebug($"State not updateable : {oldState} -> {newState}");
+                _logger?.LogDebug($"State not updateable : {oldState} -> {newState}");
                 return;
             }
 
-            bayeuxClientState = newState;
+            _bayeuxClientState = newState;
 
             postCreate?.Invoke();
 
@@ -758,11 +710,11 @@ namespace CometD.NetCore.Client
 
             // Notify threads waiting in waitFor()
             StateUpdateInProgressMutex.WaitOne();
-            --stateUpdateInProgress;
+            --_stateUpdateInProgress;
 
-            if (stateUpdateInProgress == 0)
+            if (_stateUpdateInProgress == 0)
             {
-                stateChanged.Set();
+                _stateChanged.Set();
             }
 
             StateUpdateInProgressMutex.ReleaseMutex();
@@ -770,7 +722,14 @@ namespace CometD.NetCore.Client
 
         public enum State
         {
-            INVALID, UNCONNECTED, HANDSHAKING, REHANDSHAKING, CONNECTING, CONNECTED, DISCONNECTING, DISCONNECTED
+            INVALID,
+            UNCONNECTED,
+            HANDSHAKING,
+            REHANDSHAKING,
+            CONNECTING,
+            CONNECTED,
+            DISCONNECTING,
+            DISCONNECTED
         }
 
         private class PublishTransportListener : ITransportListener
@@ -837,11 +796,7 @@ namespace CometD.NetCore.Client
 
             protected override void OnFailure(Exception x, IList<IMessage> messages)
             {
-                bayeuxClient.UpdateBayeuxClientState(
-                        delegate (BayeuxClientState oldState)
-                        {
-                            return new RehandshakingState(bayeuxClient, oldState.handshakeFields, oldState.transport, oldState.NextBackoff());
-                        });
+                bayeuxClient.UpdateBayeuxClientState(oldState => new RehandshakingState(bayeuxClient, oldState.HandshakeFields, oldState.Transport, oldState.NextBackoff()));
                 base.OnFailure(x, messages);
             }
 
@@ -868,10 +823,7 @@ namespace CometD.NetCore.Client
             protected override void OnFailure(Exception x, IList<IMessage> messages)
             {
                 bayeuxClient.UpdateBayeuxClientState(
-                        delegate (BayeuxClientState oldState)
-                        {
-                            return new UnconnectedState(bayeuxClient, oldState.handshakeFields, oldState.advice, oldState.transport, oldState.clientId, oldState.NextBackoff());
-                        });
+                        oldState => new UnconnectedState(bayeuxClient, oldState.HandshakeFields, oldState.Advice, oldState.Transport, oldState.ClientId, oldState.NextBackoff()));
                 base.OnFailure(x, messages);
             }
 
@@ -898,10 +850,7 @@ namespace CometD.NetCore.Client
             protected override void OnFailure(Exception x, IList<IMessage> messages)
             {
                 bayeuxClient.UpdateBayeuxClientState(
-                        delegate (BayeuxClientState oldState)
-                        {
-                            return new DisconnectedState(bayeuxClient, oldState.transport);
-                        });
+                        oldState => new DisconnectedState(bayeuxClient, oldState.Transport));
                 base.OnFailure(x, messages);
             }
 
@@ -971,26 +920,32 @@ namespace CometD.NetCore.Client
 
         private delegate void BayeuxClientStateUpdater_postCreateDelegate();
 
-        abstract public class BayeuxClientState
+        public abstract class BayeuxClientState
         {
-            public State type;
-            public IDictionary<string, object> handshakeFields;
-            public IDictionary<string, object> advice;
-            public ClientTransport transport;
-            public string clientId;
-            public long backoff;
-            protected BayeuxClient bayeuxClient;
+            public State TypeValue;
+            public IDictionary<string, object> HandshakeFields;
+            public IDictionary<string, object> Advice;
+            public ClientTransport Transport;
+            public string ClientId;
+            public long Backoff;
+            protected BayeuxClient _bayeuxClient;
 
-            public BayeuxClientState(BayeuxClient bayeuxClient, State type, IDictionary<string, object> handshakeFields,
-                    IDictionary<string, object> advice, ClientTransport transport, string clientId, long backoff)
+            protected BayeuxClientState(
+                BayeuxClient bayeuxClient,
+                State type,
+                IDictionary<string, object> handshakeFields,
+                IDictionary<string, object> advice,
+                ClientTransport transport,
+                string clientId,
+                long backoff)
             {
-                this.bayeuxClient = bayeuxClient;
-                this.type = type;
-                this.handshakeFields = handshakeFields;
-                this.advice = advice;
-                this.transport = transport;
-                this.clientId = clientId;
-                this.backoff = backoff;
+                _bayeuxClient = bayeuxClient;
+                TypeValue = type;
+                HandshakeFields = handshakeFields;
+                Advice = advice;
+                Transport = transport;
+                ClientId = clientId;
+                Backoff = backoff;
             }
 
             public long Interval
@@ -998,9 +953,9 @@ namespace CometD.NetCore.Client
                 get
                 {
                     long result = 0;
-                    if (advice != null && advice.ContainsKey(MessageFields.INTERVAL_FIELD))
+                    if (Advice?.ContainsKey(MessageFields.INTERVAL_FIELD) == true)
                     {
-                        result = ObjectConverter.ToInt64(advice[MessageFields.INTERVAL_FIELD], result);
+                        result = ObjectConverter.ToInt64(Advice[MessageFields.INTERVAL_FIELD], result);
                     }
 
                     return result;
@@ -1022,28 +977,29 @@ namespace CometD.NetCore.Client
                 {
                     if (message.Id == null)
                     {
-                        message.Id = bayeuxClient.NewMessageId();
+                        message.Id = _bayeuxClient.NewMessageId();
                     }
 
-                    if (clientId != null)
+                    if (ClientId != null)
                     {
-                        message.ClientId = clientId;
+                        message.ClientId = ClientId;
                     }
 
-                    if (!bayeuxClient.ExtendSend(message))
+                    if (!_bayeuxClient.ExtendSend(message))
                     {
                         messages.Remove(message);
                     }
                 }
+
                 if (messages.Count > 0)
                 {
-                    transport.Send(listener, messages);
+                    Transport.Send(listener, messages);
                 }
             }
 
             public long NextBackoff()
             {
-                return Math.Min(backoff + bayeuxClient.BackoffIncrement, bayeuxClient.MaxBackoff);
+                return Math.Min(Backoff + _bayeuxClient.BackoffIncrement, _bayeuxClient.MaxBackoff);
             }
 
             public abstract bool IsUpdateableTo(BayeuxClientState newState);
@@ -1054,11 +1010,11 @@ namespace CometD.NetCore.Client
 
             public abstract void Execute();
 
-            public State Type => type;
+            public State Type => TypeValue;
 
             public override string ToString()
             {
-                return type.ToString();
+                return TypeValue.ToString();
             }
         }
 
@@ -1071,13 +1027,13 @@ namespace CometD.NetCore.Client
 
             public override bool IsUpdateableTo(BayeuxClientState newState)
             {
-                return newState.type == State.HANDSHAKING;
+                return newState.TypeValue == State.HANDSHAKING;
             }
 
             public override void Execute()
             {
-                transport.Reset();
-                bayeuxClient.Terminate();
+                Transport.Reset();
+                _bayeuxClient.Terminate();
             }
         }
 
@@ -1090,7 +1046,7 @@ namespace CometD.NetCore.Client
 
             public override void Execute()
             {
-                transport.Abort();
+                Transport.Abort();
                 base.Execute();
             }
         }
@@ -1104,15 +1060,15 @@ namespace CometD.NetCore.Client
 
             public override bool IsUpdateableTo(BayeuxClientState newState)
             {
-                return newState.type == State.REHANDSHAKING ||
-                    newState.type == State.CONNECTING ||
-                    newState.type == State.DISCONNECTED;
+                return newState.TypeValue == State.REHANDSHAKING ||
+                    newState.TypeValue == State.CONNECTING ||
+                    newState.TypeValue == State.DISCONNECTED;
             }
 
             public override void Enter(State oldState)
             {
                 // Always reset the subscriptions when a handshake has been requested.
-                bayeuxClient.ResetSubscriptions();
+                _bayeuxClient.ResetSubscriptions();
             }
 
             public override void Execute()
@@ -1120,22 +1076,26 @@ namespace CometD.NetCore.Client
                 // The state could change between now and when sendHandshake() runs;
                 // in this case the handshake message will not be sent and will not
                 // be failed, because most probably the client has been disconnected.
-                bayeuxClient.SendHandshake();
+                _bayeuxClient.SendHandshake();
             }
         }
 
         private class RehandshakingState : BayeuxClientState
         {
-            public RehandshakingState(BayeuxClient bayeuxClient, IDictionary<string, object> handshakeFields, ClientTransport transport, long backoff)
+            public RehandshakingState(
+                BayeuxClient bayeuxClient,
+                IDictionary<string, object> handshakeFields,
+                ClientTransport transport,
+                long backoff)
                 : base(bayeuxClient, State.REHANDSHAKING, handshakeFields, null, transport, null, backoff)
             {
             }
 
             public override bool IsUpdateableTo(BayeuxClientState newState)
             {
-                return newState.type == State.CONNECTING ||
-                    newState.type == State.REHANDSHAKING ||
-                    newState.type == State.DISCONNECTED;
+                return newState.TypeValue == State.CONNECTING ||
+                    newState.TypeValue == State.REHANDSHAKING ||
+                    newState.TypeValue == State.DISCONNECTED;
             }
 
             public override void Enter(State oldState)
@@ -1145,80 +1105,96 @@ namespace CometD.NetCore.Client
                 if (oldState != State.HANDSHAKING)
                 {
                     // Reset subscriptions if not queued after initial handshake
-                    bayeuxClient.ResetSubscriptions();
+                    _bayeuxClient.ResetSubscriptions();
                 }
             }
 
             public override void Execute()
             {
-                bayeuxClient.ScheduleHandshake(Interval, backoff);
+                _bayeuxClient.ScheduleHandshake(Interval, Backoff);
             }
         }
 
         private class ConnectingState : BayeuxClientState
         {
-            public ConnectingState(BayeuxClient bayeuxClient, IDictionary<string, object> handshakeFields, IDictionary<string, object> advice, ClientTransport transport, string clientId)
+            public ConnectingState(
+                BayeuxClient bayeuxClient,
+                IDictionary<string, object> handshakeFields,
+                IDictionary<string, object> advice,
+                ClientTransport transport,
+                string clientId)
                 : base(bayeuxClient, State.CONNECTING, handshakeFields, advice, transport, clientId, 0)
             {
             }
 
             public override bool IsUpdateableTo(BayeuxClientState newState)
             {
-                return newState.type == State.CONNECTED ||
-                    newState.type == State.UNCONNECTED ||
-                    newState.type == State.REHANDSHAKING ||
-                    newState.type == State.DISCONNECTING ||
-                    newState.type == State.DISCONNECTED;
+                return newState.TypeValue == State.CONNECTED ||
+                    newState.TypeValue == State.UNCONNECTED ||
+                    newState.TypeValue == State.REHANDSHAKING ||
+                    newState.TypeValue == State.DISCONNECTING ||
+                    newState.TypeValue == State.DISCONNECTED;
             }
 
             public override void Execute()
             {
                 // Send the messages that may have queued up before the handshake completed
-                bayeuxClient.SendBatch();
-                bayeuxClient.ScheduleConnect(Interval, backoff);
+                _bayeuxClient.SendBatch();
+                _bayeuxClient.ScheduleConnect(Interval, Backoff);
             }
         }
 
         private class ConnectedState : BayeuxClientState
         {
-            public ConnectedState(BayeuxClient bayeuxClient, IDictionary<string, object> handshakeFields, IDictionary<string, object> advice, ClientTransport transport, string clientId)
+            public ConnectedState(
+                BayeuxClient bayeuxClient,
+                IDictionary<string, object> handshakeFields,
+                IDictionary<string, object> advice,
+                ClientTransport transport,
+                string clientId)
                 : base(bayeuxClient, State.CONNECTED, handshakeFields, advice, transport, clientId, 0)
             {
             }
 
             public override bool IsUpdateableTo(BayeuxClientState newState)
             {
-                return newState.type == State.CONNECTED ||
-                    newState.type == State.UNCONNECTED ||
-                    newState.type == State.REHANDSHAKING ||
-                    newState.type == State.DISCONNECTING ||
-                    newState.type == State.DISCONNECTED;
+                return newState.TypeValue == State.CONNECTED ||
+                    newState.TypeValue == State.UNCONNECTED ||
+                    newState.TypeValue == State.REHANDSHAKING ||
+                    newState.TypeValue == State.DISCONNECTING ||
+                    newState.TypeValue == State.DISCONNECTED;
             }
 
             public override void Execute()
             {
-                bayeuxClient.ScheduleConnect(Interval, backoff);
+                _bayeuxClient.ScheduleConnect(Interval, Backoff);
             }
         }
 
         private class UnconnectedState : BayeuxClientState
         {
-            public UnconnectedState(BayeuxClient bayeuxClient, IDictionary<string, object> handshakeFields, IDictionary<string, object> advice, ClientTransport transport, string clientId, long backoff)
+            public UnconnectedState(
+                BayeuxClient bayeuxClient,
+                IDictionary<string, object> handshakeFields,
+                IDictionary<string, object> advice,
+                ClientTransport transport,
+                string clientId,
+                long backoff)
                 : base(bayeuxClient, State.UNCONNECTED, handshakeFields, advice, transport, clientId, backoff)
             {
             }
 
             public override bool IsUpdateableTo(BayeuxClientState newState)
             {
-                return newState.type == State.CONNECTED ||
-                    newState.type == State.UNCONNECTED ||
-                    newState.type == State.REHANDSHAKING ||
-                    newState.type == State.DISCONNECTED;
+                return newState.TypeValue == State.CONNECTED ||
+                    newState.TypeValue == State.UNCONNECTED ||
+                    newState.TypeValue == State.REHANDSHAKING ||
+                    newState.TypeValue == State.DISCONNECTED;
             }
 
             public override void Execute()
             {
-                bayeuxClient.ScheduleConnect(Interval, backoff);
+                _bayeuxClient.ScheduleConnect(Interval, Backoff);
             }
         }
 
@@ -1231,14 +1207,14 @@ namespace CometD.NetCore.Client
 
             public override bool IsUpdateableTo(BayeuxClientState newState)
             {
-                return newState.type == State.DISCONNECTED;
+                return newState.TypeValue == State.DISCONNECTED;
             }
 
             public override void Execute()
             {
-                var message = bayeuxClient.NewMessage();
+                var message = _bayeuxClient.NewMessage();
                 message.Channel = ChannelFields.META_DISCONNECT;
-                Send(bayeuxClient.disconnectListener, message);
+                Send(_bayeuxClient._disconnectListener, message);
             }
         }
     }

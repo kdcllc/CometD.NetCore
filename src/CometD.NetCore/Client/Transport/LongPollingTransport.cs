@@ -6,9 +6,12 @@ using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+
 using CometD.NetCore.Bayeux;
 using CometD.NetCore.Common;
+
 using Microsoft.Extensions.Logging;
+
 using Newtonsoft.Json;
 
 namespace CometD.NetCore.Client.Transport
@@ -18,8 +21,9 @@ namespace CometD.NetCore.Client.Transport
         private static ILogger _logger;
 
         private readonly List<TransportExchange> _exchanges = new List<TransportExchange>();
-        private readonly List<LongPollingRequest> transportQueue = new List<LongPollingRequest>();
-        private readonly HashSet<LongPollingRequest> transmissions = new HashSet<LongPollingRequest>();
+        private readonly List<LongPollingRequest> _transportQueue = new List<LongPollingRequest>();
+        private readonly HashSet<LongPollingRequest> _transmissions = new HashSet<LongPollingRequest>();
+        private readonly object _lockObject = new object();
 
         private bool _appendMessageType;
 
@@ -47,7 +51,8 @@ namespace CometD.NetCore.Client.Transport
         public override void Init()
         {
             base.Init();
-            //_aborted = false;
+
+            // _aborted = false;
             var uriRegex = new Regex("(^https?://(([^:/\\?#]+)(:(\\d+))?))?([^\\?#]*)(.*)?");
             var uriMatch = uriRegex.Match(Url);
             if (uriMatch.Success)
@@ -59,8 +64,8 @@ namespace CometD.NetCore.Client.Transport
 
         public override void Abort()
         {
-            //_aborted = true;
-            lock (this)
+            // _aborted = true;
+            lock (_lockObject)
             {
                 foreach (var exchange in _exchanges)
                 {
@@ -78,11 +83,12 @@ namespace CometD.NetCore.Client.Transport
         // Fix for not running more than two simultaneous requests:
         public class LongPollingRequest
         {
+            public int RequestTimout;
+            public TransportExchange Exchange;
+
             private readonly ITransportListener _listener;
             private readonly IList<IMutableMessage> _messages;
             private readonly HttpWebRequest _request;
-            public int RequestTimout;
-            public  TransportExchange Exchange;
 
             public LongPollingRequest(
                 ITransportListener listener,
@@ -110,20 +116,19 @@ namespace CometD.NetCore.Client.Transport
             }
         }
 
-
         private void PerformNextRequest()
         {
             var ok = false;
             LongPollingRequest nextRequest = null;
 
-            lock (this)
+            lock (_lockObject)
             {
-                if (transportQueue.Count > 0 && transmissions.Count <= 1)
+                if (_transportQueue.Count > 0 && _transmissions.Count <= 1)
                 {
                     ok = true;
-                    nextRequest = transportQueue[0];
-                    transportQueue.Remove(nextRequest);
-                    transmissions.Add(nextRequest);
+                    nextRequest = _transportQueue[0];
+                    _transportQueue.Remove(nextRequest);
+                    _transmissions.Add(nextRequest);
                 }
             }
 
@@ -135,9 +140,9 @@ namespace CometD.NetCore.Client.Transport
 
         public void AddRequest(LongPollingRequest request)
         {
-            lock (this)
+            lock (_lockObject)
             {
-                transportQueue.Add(request);
+                _transportQueue.Add(request);
             }
 
             PerformNextRequest();
@@ -145,9 +150,9 @@ namespace CometD.NetCore.Client.Transport
 
         public void RemoveRequest(LongPollingRequest request)
         {
-            lock (this)
+            lock (_lockObject)
             {
-                transmissions.Remove(request);
+                _transmissions.Remove(request);
             }
 
             PerformNextRequest();
@@ -162,7 +167,9 @@ namespace CometD.NetCore.Client.Transport
 
             var url = Url;
 
-            if (_appendMessageType && messages.Count == 1 && messages[0].Meta)
+            if (_appendMessageType
+                && messages.Count == 1
+                && messages[0].Meta)
             {
                 var type = messages[0].Channel.Substring(ChannelFields.META.Length);
                 if (url.EndsWith("/"))
@@ -177,19 +184,9 @@ namespace CometD.NetCore.Client.Transport
             request.Method = "POST";
             request.ContentType = "application/json;charset=UTF-8";
 
-            if (request.CookieContainer == null)
-            {
-                request.CookieContainer = new CookieContainer();
-            }
+            (request.CookieContainer ?? (request.CookieContainer = new CookieContainer())).Add(GetCookieCollection());
 
-            request.CookieContainer.Add(GetCookieCollection());
-
-            if (request.Headers == null)
-            {
-                request.Headers = new WebHeaderCollection();
-            }
-
-            request.Headers.Add(GetHeaderCollection());
+            (request.Headers ?? (request.Headers = new WebHeaderCollection())).Add(GetHeaderCollection());
 
             var content = JsonConvert.SerializeObject(ObjectConverter.ToListOfDictionary(messages));
 
@@ -202,7 +199,7 @@ namespace CometD.NetCore.Client.Transport
                 Content = content,
                 Request = request
             };
-            lock (this)
+            lock (_lockObject)
             {
                 _exchanges.Add(exchange);
             }
@@ -215,14 +212,14 @@ namespace CometD.NetCore.Client.Transport
         {
             get
             {
-                lock (this)
+                lock (_lockObject)
                 {
-                    if (transportQueue.Count > 0)
+                    if (_transportQueue.Count > 0)
                     {
                         return true;
                     }
 
-                    foreach (var transmission in transmissions)
+                    foreach (var transmission in _transmissions)
                     {
                         if (transmission.Exchange.IsSending)
                         {
@@ -283,11 +280,10 @@ namespace CometD.NetCore.Client.Transport
                 {
                     using (var streamResponse = response.GetResponseStream())
                     {
-                        using (var streamRead = new StreamReader(streamResponse))
-                        {
-                            responsestring = streamRead.ReadToEnd();
-                        }
+                        using var streamRead = new StreamReader(streamResponse);
+                        responsestring = streamRead.ReadToEnd();
                     }
+
                     _logger?.LogDebug("Received message(s).");
 
                     if (response.Cookies != null)
@@ -338,8 +334,6 @@ namespace CometD.NetCore.Client.Transport
 
         public class TransportExchange
         {
-            private readonly LongPollingTransport parent;
-
             public string Content;
             public HttpWebRequest Request;
             public ITransportListener Listener;
@@ -347,12 +341,15 @@ namespace CometD.NetCore.Client.Transport
             public LongPollingRequest LongPollingRequest;
             public bool IsSending;
 
-            public TransportExchange(LongPollingTransport parent,
+            private readonly LongPollingTransport _parent;
+
+            public TransportExchange(
+                LongPollingTransport parent,
                 ITransportListener listener,
                 IList<IMutableMessage> messages,
                 LongPollingRequest _lprequest)
             {
-                this.parent = parent;
+                _parent = parent;
                 Listener = listener;
                 Messages = messages;
                 Request = null;
@@ -362,24 +359,21 @@ namespace CometD.NetCore.Client.Transport
 
             public void AddCookie(Cookie cookie)
             {
-                parent.AddCookie(cookie);
+                _parent.AddCookie(cookie);
             }
 
             public void Dispose()
             {
-                parent.RemoveRequest(LongPollingRequest);
-                lock (parent)
+                _parent.RemoveRequest(LongPollingRequest);
+                lock (_parent)
                 {
-                    parent._exchanges.Remove(this);
+                    _parent._exchanges.Remove(this);
                 }
             }
 
             public void Abort()
             {
-                if (Request != null)
-                {
-                    Request.Abort();
-                }
+                Request?.Abort();
             }
         }
     }
