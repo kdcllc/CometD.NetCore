@@ -6,8 +6,8 @@ namespace CometD.NetCore.Client.Transport
 {
     public abstract class HttpClientTransport : ClientTransport
     {
-        private CookieCollection cookieCollection;
-        private WebHeaderCollection headerCollection;
+        private CookieCollection _cookieCollection;
+        private WebHeaderCollection _headerCollection;
 
         protected HttpClientTransport(string name, IDictionary<string, object> options, NameValueCollection headers)
             : base(name, options)
@@ -23,40 +23,34 @@ namespace CometD.NetCore.Client.Transport
 
         public void SetCookieCollection(CookieCollection cookieCollection)
         {
-            this.cookieCollection = cookieCollection;
+            _cookieCollection = cookieCollection;
         }
 
         public void SetHeaderCollection(WebHeaderCollection headerCollection)
         {
-            this.headerCollection = headerCollection;
+            _headerCollection = headerCollection;
         }
 
         protected internal void AddCookie(Cookie cookie)
         {
-            var cookieCollection = this.cookieCollection;
-            if (cookieCollection != null)
-            {
-                cookieCollection.Add(cookie);
-            }
+            var cookieCollection = _cookieCollection;
+            cookieCollection?.Add(cookie);
         }
 
         protected internal void AddHeaders(NameValueCollection headers)
         {
-            var headerCollection = this.headerCollection;
-            if (headerCollection != null)
-            {
-                headerCollection.Add(headers);
-            }
+            var headerCollection = _headerCollection;
+            headerCollection?.Add(headers);
         }
 
         protected CookieCollection GetCookieCollection()
         {
-            return cookieCollection;
+            return _cookieCollection;
         }
 
         protected WebHeaderCollection GetHeaderCollection()
         {
-            return headerCollection;
+            return _headerCollection;
         }
     }
 }

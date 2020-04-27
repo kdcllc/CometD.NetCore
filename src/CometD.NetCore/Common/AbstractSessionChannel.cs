@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+
 using CometD.NetCore.Bayeux;
 using CometD.NetCore.Bayeux.Client;
+
 using Microsoft.Extensions.Logging;
 
 namespace CometD.NetCore.Common
@@ -11,10 +14,11 @@ namespace CometD.NetCore.Common
     {
         private readonly ILogger _logger;
 
-        private Dictionary<string, object> _attributes = new Dictionary<string, object>();
-        private List<IClientSessionChannelListener> _listeners = new List<IClientSessionChannelListener>();
-        private int _subscriptionCount = 0;
-        private List<IMessageListener> _subscriptions = new List<IMessageListener>();
+        private readonly ConcurrentDictionary<string, object> _attributes = new ConcurrentDictionary<string, object>();
+        private readonly List<IClientSessionChannelListener> _listeners = new List<IClientSessionChannelListener>();
+        private readonly List<IMessageListener> _subscriptions = new List<IMessageListener>();
+
+        private int _subscriptionCount;
 
         public long ReplayId { get; private set; }
 
@@ -30,14 +34,13 @@ namespace CometD.NetCore.Common
             _logger = logger;
         }
 
-        #region IClientSessionChannel
         public abstract IClientSession Session { get; }
 
         public void AddListener(IClientSessionChannelListener listener)
         {
             _listeners.Add(listener);
         }
-        
+
         public abstract void Publish(object param1);
 
         public abstract void Publish(object param1, string param2);
@@ -58,7 +61,7 @@ namespace CometD.NetCore.Common
                 SendSubscribe();
             }
         }
-        
+
         public void Unsubscribe(IMessageListener listener)
         {
             _subscriptions.Remove(listener);
@@ -84,11 +87,6 @@ namespace CometD.NetCore.Common
             }
         }
 
-
-        #endregion
-
-        #region IChannel
-
         public ICollection<string> AttributeNames => _attributes.Keys;
 
         public ChannelId ChannelId { get; }
@@ -112,7 +110,12 @@ namespace CometD.NetCore.Common
         public object RemoveAttribute(string name)
         {
             var old = GetAttribute(name);
-            _attributes.Remove(name);
+
+            if (_attributes.TryRemove(name, out var va))
+            {
+                return va;
+            }
+
             return old;
         }
 
@@ -121,8 +124,6 @@ namespace CometD.NetCore.Common
             _attributes[name] = val;
         }
 
-        #endregion
-        
         public void NotifyMessageListeners(IMessage message)
         {
             foreach (var listener in _listeners)
@@ -159,7 +160,7 @@ namespace CometD.NetCore.Common
                 }
             }
         }
-        
+
         public void ResetSubscriptions()
         {
             foreach (var listener in new List<IMessageListener>(_subscriptions))
@@ -168,12 +169,12 @@ namespace CometD.NetCore.Common
                 _subscriptionCount--;
             }
         }
-                
+
         public override string ToString()
         {
             return ChannelId.ToString();
         }
-        
+
         protected abstract void SendSubscribe();
 
         protected abstract void SendUnSubscribe();

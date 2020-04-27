@@ -1,9 +1,10 @@
 ﻿using System.Collections.Generic;
+
 using CometD.NetCore.Bayeux;
 
 namespace CometD.NetCore.Common
 {
-    internal class Print
+    internal sealed class Print
     {
         public static string Dictionary(IDictionary<string, object> dictionary)
         {
@@ -17,7 +18,7 @@ namespace CometD.NetCore.Common
                 return " (invalid)";
             }
 
-            var s = "";
+            var s = string.Empty;
 
             foreach (var kvp in dictionary)
             {
@@ -33,12 +34,13 @@ namespace CometD.NetCore.Common
 
                 s += "'";
             }
+
             return s;
         }
 
         public static string List(IList<string> L)
         {
-            var s = "";
+            var s = string.Empty;
             foreach (var e in L)
             {
                 s += " '" + e + "'";
@@ -89,6 +91,7 @@ namespace CometD.NetCore.Common
             {
                 s += " " + m;
             }
+
             s += " ]";
             return s;
         }

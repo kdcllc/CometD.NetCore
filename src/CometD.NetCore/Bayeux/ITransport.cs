@@ -40,17 +40,21 @@ namespace CometD.NetCore.Bayeux
     /// </ul>
     ///
     /// </summary>
-    /// <version>  $Revision: 1483 $ $Date: 2009-03-04 14:56:47 +0100 (Wed, 04 Mar 2009) $
-    /// </version>
     public interface ITransport
     {
-        /// <returns> The well known name of this transport, used in transport negotiations
+        /// <summary>
+        /// Name.
+        /// </summary>
+        /// <returns> The well known name of this transport, used in transport negotiations.
         /// </returns>
         /// <seealso cref="IBayeux.getAllowedTransports()">
         /// </seealso>
         string Name { get; }
 
-        /// <returns> the set of configuration options
+        /// <summary>
+        /// OptionNames.
+        /// </summary>
+        /// <returns> the set of configuration options.
         /// </returns>
         /// <seealso cref="GetOption(string)">
         /// </seealso>
@@ -63,9 +67,12 @@ namespace CometD.NetCore.Bayeux
         /// </returns>
         string OptionPrefix { get; }
 
-        /// <param name="name">the configuration option name
+        /// <summary>
+        /// GetOption.
+        /// </summary>
+        /// <param name="name">the configuration option name.
         /// </param>
-        /// <returns> the configuration option with the given {@code qualifiedName}
+        /// <returns> the configuration option with the given {@code qualifiedName}.
         /// </returns>
         /// <seealso cref="getOptionNames()">
         /// </seealso>

@@ -1,25 +1,24 @@
 # CometD for Salesforce Platform events
 
 [![Build status](https://ci.appveyor.com/api/projects/status/6t0kmjpr6ckvhrxe?svg=true)](https://ci.appveyor.com/project/kdcllc/cometd-netcore)
-[![NuGet](https://img.shields.io/nuget/v/CometD.NetCore.svg)](https://www.nuget.org/packages?q=CometD.NetCore)
+[![NuGet](https://img.shields.io/nuget/v/CometD.NetCore2.svg)](https://www.nuget.org/packages?q=CometD.NetCore2)
 [![MyGet](https://img.shields.io/myget/kdcllc/v/CometD.NetCore2.svg?label=myget)](https://www.myget.org/F/kdcllc/api/v2)
 
 This repo contains the CometD .NET Core implementation of the Java ported code.
 
-- CometD.NetCore - [CometD.org](CometD.org) implementation, supports replay id.
+- `CometD.NetCore2` - [CometD.org](CometD.org) implementation, supports replay id.
 - [CometD.NetCore.Salesforce project](https://github.com/kdcllc/CometD.NetCore.Salesforce) - provides with implementation of this library.
 
 ## Install
 
 ```bash
-    PM> Install-Package CometD.NetCore2
-```
-
-Or
-
-```bash
     dotnet add package CometD.NetCore2
 ```
+
+## Related projects
+
+- [CometD.NetCore.Salesforce](https://github.com/kdcllc/CometD.NetCore.Salesforce) - contais Saleforce Auth utility and implementation for relay id.
+- [Bet.BuildingBlocks.SalesforceEventBus](https://github.com/kdcllc/Bet.BuildingBlocks.SalesforceEventBus) - reusable EvenBus for Salesforce.
 
 ## Configure Saleforce Developer instance
 

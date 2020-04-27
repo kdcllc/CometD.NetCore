@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
+
 using CometD.NetCore.Bayeux;
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -10,8 +12,6 @@ namespace CometD.NetCore.Common
     [Serializable]
     public class DictionaryMessage : Dictionary<string, object>, IMutableMessage
     {
-        private const long SerialVersionUID = 4318697940670212190L;
-
         public DictionaryMessage()
         {
         }
@@ -34,6 +34,7 @@ namespace CometD.NetCore.Common
                     advice = JsonConvert.DeserializeObject<IDictionary<string, object>>(advice.ToString());
                     this[MessageFields.ADVICE_FIELD] = advice;
                 }
+
                 return (IDictionary<string, object>)advice;
             }
         }
@@ -100,6 +101,7 @@ namespace CometD.NetCore.Common
                     data = JsonConvert.DeserializeObject<Dictionary<string, object>>(data as string);
                     this[MessageFields.DATA_FIELD] = data;
                 }
+
                 return (Dictionary<string, object>)data;
             }
         }
@@ -114,11 +116,13 @@ namespace CometD.NetCore.Common
                     ext = JsonConvert.DeserializeObject<Dictionary<string, object>>(ext as string);
                     this[MessageFields.EXT_FIELD] = ext;
                 }
+
                 if (ext is JObject)
                 {
                     ext = JsonConvert.DeserializeObject<Dictionary<string, object>>(ext.ToString());
                     this[MessageFields.EXT_FIELD] = ext;
                 }
+
                 return (Dictionary<string, object>)ext;
             }
         }
@@ -178,6 +182,7 @@ namespace CometD.NetCore.Common
                 advice = new Dictionary<string, object>();
                 this[MessageFields.ADVICE_FIELD] = advice;
             }
+
             return advice;
         }
 
@@ -189,6 +194,7 @@ namespace CometD.NetCore.Common
                 data = new Dictionary<string, object>();
                 this[MessageFields.DATA_FIELD] = data;
             }
+
             return data;
         }
 
@@ -200,6 +206,7 @@ namespace CometD.NetCore.Common
                 ext = new Dictionary<string, object>();
                 this[MessageFields.EXT_FIELD] = ext;
             }
+
             return ext;
         }
 
@@ -208,9 +215,9 @@ namespace CometD.NetCore.Common
             return Json;
         }
 
-        protected DictionaryMessage(SerializationInfo serializationInfo,
-            StreamingContext streamingContext)
-            : base(serializationInfo, streamingContext)
+        protected DictionaryMessage(
+            SerializationInfo serializationInfo,
+            StreamingContext streamingContext) : base(serializationInfo, streamingContext)
         {
         }
     }

@@ -12,13 +12,17 @@ namespace CometD.NetCore.Common
         /// <summary>
         /// Initializes a new instance of the <see cref="TransportException"/> class.
         /// </summary>
-        public TransportException() : base() { }
+        public TransportException() : base()
+        {
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TransportException"/> class
         /// with a specified error message.
         /// </summary>
-        public TransportException(string message) : base(message) { }
+        public TransportException(string message) : base(message)
+        {
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TransportException"/> class
@@ -26,12 +30,16 @@ namespace CometD.NetCore.Common
         /// that is the cause of this exception.
         /// </summary>
         public TransportException(string message, Exception cause)
-            : base(message, cause) { }
+            : base(message, cause)
+        {
+        }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TransportException"/> class with serialized data.
         /// </summary>
         protected TransportException(SerializationInfo info, StreamingContext context)
-            : base(info, context) { }
+            : base(info, context)
+        {
+        }
     }
 }

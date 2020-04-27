@@ -19,10 +19,11 @@ namespace CometD.NetCore.Bayeux
     /// </ul>
     ///
     /// </summary>
-    /// <version>  $Revision: 1483 $ $Date: 2009-03-04 14:56:47 +0100 (Wed, 04 Mar 2009) $
-    /// </version>
     public interface ISession
     {
+        /// <summary>
+        /// AttributeNames.
+        /// </summary>
         /// <returns> the list of session attribute names.
         /// </returns>
         ICollection<string> AttributeNames { get; }
@@ -30,7 +31,7 @@ namespace CometD.NetCore.Bayeux
         /// <summary> <p>A connected session is a session where the link between the client and the server
         /// has been established.</p>
         /// </summary>
-        /// <returns> whether the session is connected
+        /// <returns> whether the session is connected.
         /// </returns>
         /// <seealso cref="Disconnect()">
         /// </seealso>
@@ -39,7 +40,7 @@ namespace CometD.NetCore.Bayeux
         /// <summary>
         /// <p>A handshook session is a session where the handshake has successfully completed</p>
         /// </summary>
-        /// <returns> whether the session is handshook
+        /// <returns> whether the session is handshook.
         /// </returns>
         bool Handshook { get; }
 
@@ -48,7 +49,7 @@ namespace CometD.NetCore.Bayeux
         /// backwards compatibility with the Bayeux protocol, it is a field called "clientId"
         /// that identifies a session.</p>
         /// </summary>
-        /// <returns> the id of this session
+        /// <returns> the id of this session.
         /// </returns>
         string Id { get; }
 
@@ -56,7 +57,7 @@ namespace CometD.NetCore.Bayeux
         /// by the command (via the Bayeux API) is queued up until the end of the
         /// command and then all messages are sent at once.</p>
         /// </summary>
-        /// <param name="batch">the Runnable to run as a batch
+        /// <param name="batch">the Runnable to run as a batch.
         /// </param>
         void Batch(Action batch);
 
@@ -73,16 +74,16 @@ namespace CometD.NetCore.Bayeux
         bool EndBatch();
 
         /// <summary> <p>Retrieves the value of named session attribute.</p></summary>
-        /// <param name="name">the name of the attribute
+        /// <param name="name">the name of the attribute.
         /// </param>
-        /// <returns> the attribute value or null if the attribute is not present
+        /// <returns> the attribute value or null if the attribute is not present.
         /// </returns>
         object GetAttribute(string name);
 
         /// <summary> <p>Removes a named session attribute.</p></summary>
-        /// <param name="name">the name of the attribute
+        /// <param name="name">the name of the attribute.
         /// </param>
-        /// <returns> the value of the attribute
+        /// <returns> the value of the attribute.
         /// </returns>
         object RemoveAttribute(string name);
 
@@ -90,11 +91,9 @@ namespace CometD.NetCore.Bayeux
         /// <p>Session attributes are convenience data that allows arbitrary
         /// application data to be associated with a session.</p>
         /// </summary>
-        /// <param name="name">the attribute name
+        /// <param name="name">the attribute name.
         /// </param>
         /// <param name="val"></param>
-        /// <param name="value">the attribute value
-        /// </param>
         void SetAttribute(string name, object val);
 
         /// <summary> <p>Starts a batch, to be ended with {@link #endBatch()}.</p>

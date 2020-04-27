@@ -1,13 +1,15 @@
 ﻿using System;
+
 using CometD.NetCore.Bayeux;
 using CometD.NetCore.Bayeux.Client;
+
 using Microsoft.Extensions.Logging;
 
 namespace CometD.NetCore.Client.Extension
 {
     public class ErrorExtension : IExtension
     {
-        private readonly ILogger logger;
+        private readonly ILogger _logger;
 
         public ErrorExtension()
         {
@@ -15,7 +17,7 @@ namespace CometD.NetCore.Client.Extension
 
         public ErrorExtension(ILogger logger)
         {
-            this.logger = logger;
+            _logger = logger;
         }
 
         public event EventHandler<string> ConnectionMessage;
@@ -40,21 +42,21 @@ namespace CometD.NetCore.Client.Extension
         /// <returns></returns>
         /// <example>
         /// {
-        ///    "clientId": "2d71lgayxukaalrq17ryle2pyeeu6", 
+        ///    "clientId": "2d71lgayxukaalrq17ryle2pyeeu6",
         ///    "advice": {
-        ///     "interval": 0, 
+        ///     "interval": 0,
         ///     "reconnect": "none"
-        ///    }, 
-        ///   "channel": "/meta/connect", 
-        ///   "id": "365", 
-        ///   "error": "403::Unknown client", 
-        ///   "successful": false, 
+        ///    },
+        ///   "channel": "/meta/connect",
+        ///   "id": "365",
+        ///   "error": "403::Unknown client",
+        ///   "successful": false,
         ///   "action": "connect"
-        ///    }
+        ///    }.
         /// </example>
         public bool ReceiveMeta(IClientSession session, IMutableMessage message)
         {
-            logger?.LogDebug($"ReceiveMeta: {message}");
+            _logger?.LogDebug($"ReceiveMeta: {message}");
 
             if (message.Successful)
             {
@@ -71,10 +73,10 @@ namespace CometD.NetCore.Client.Extension
             {
                 OnConnectionError(message["error"].ToString());
 
-                //if (message["error"].ToString().ToLower() == "403::unknown client")
-                //{
+                // if (message["error"].ToString().ToLower() == "403::unknown client")
+                // {
                 //    this.OnConnectionError(message["error"].ToString());
-                //}
+                // }
             }
 
             return true;
@@ -87,7 +89,7 @@ namespace CometD.NetCore.Client.Extension
 
         public bool SendMeta(IClientSession session, IMutableMessage message)
         {
-            logger?.LogDebug($"SendMeta: {message}");
+            _logger?.LogDebug($"SendMeta: {message}");
 
             return true;
         }

@@ -12,38 +12,38 @@
     public interface IExtension
     {
         /// <summary> Callback method invoked every time a normal message is received.</summary>
-        /// <param name="session">the session object that is receiving the message
+        /// <param name="session">the session object that is receiving the message.
         /// </param>
-        /// <param name="message">the message received
+        /// <param name="message">the message received.
         /// </param>
-        /// <returns> true if message processing should continue, false if it should stop
+        /// <returns> true if message processing should continue, false if it should stop.
         /// </returns>
         bool Receive(IClientSession session, IMutableMessage message);
 
         /// <summary> Callback method invoked every time a meta message is received.</summary>
-        /// <param name="session">the session object that is receiving the meta message
+        /// <param name="session">the session object that is receiving the meta message.
         /// </param>
-        /// <param name="message">the meta message received
+        /// <param name="message">the meta message received.
         /// </param>
-        /// <returns> true if message processing should continue, false if it should stop
+        /// <returns> true if message processing should continue, false if it should stop.
         /// </returns>
         bool ReceiveMeta(IClientSession session, IMutableMessage message);
 
         /// <summary> Callback method invoked every time a normal message is being sent.</summary>
-        /// <param name="session">the session object that is sending the message
+        /// <param name="session">the session object that is sending the message.
         /// </param>
-        /// <param name="message">the message being sent
+        /// <param name="message">the message being sent.
         /// </param>
-        /// <returns> true if message processing should continue, false if it should stop
+        /// <returns> true if message processing should continue, false if it should stop.
         /// </returns>
         bool Send(IClientSession session, IMutableMessage message);
 
         /// <summary> Callback method invoked every time a meta message is being sent.</summary>
-        /// <param name="session">the session object that is sending the message
+        /// <param name="session">the session object that is sending the message.
         /// </param>
-        /// <param name="message">the meta message being sent
+        /// <param name="message">the meta message being sent.
         /// </param>
-        /// <returns> true if message processing should continue, false if it should stop
+        /// <returns> true if message processing should continue, false if it should stop.
         /// </returns>
         bool SendMeta(IClientSession session, IMutableMessage message);
     }

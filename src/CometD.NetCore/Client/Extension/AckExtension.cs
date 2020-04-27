@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+
 using CometD.NetCore.Bayeux;
 using CometD.NetCore.Bayeux.Client;
 using CometD.NetCore.Common;
@@ -21,9 +22,6 @@ namespace CometD.NetCore.Client.Extension
     /// acknowledged when long poll returns.
     ///
     /// </summary>
-    /// <author>  dyu
-    /// </author>
-
     public class AckExtension : IExtension
     {
         public const string EXT_FIELD = "ack";
@@ -45,7 +43,9 @@ namespace CometD.NetCore.Client.Extension
                 var ext = (Dictionary<string, object>)message.GetExt(false);
                 _serverSupportsAcks = ext != null && true.Equals(ext[EXT_FIELD]);
             }
-            else if (_serverSupportsAcks && true.Equals(message[MessageFields.SUCCESSFUL_FIELD]) && ChannelFields.META_CONNECT.Equals(message.Channel))
+            else if (_serverSupportsAcks
+                && true.Equals(message[MessageFields.SUCCESSFUL_FIELD])
+                && ChannelFields.META_CONNECT.Equals(message.Channel))
             {
                 var ext = (Dictionary<string, object>)message.GetExt(false);
                 if (ext != null)

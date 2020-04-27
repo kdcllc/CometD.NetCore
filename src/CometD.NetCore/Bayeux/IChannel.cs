@@ -28,52 +28,70 @@ namespace CometD.NetCore.Bayeux
     /// "/foo/&#42;/bar/** is an invalid channel.</p>
     ///
     /// </summary>
-    /// <version>  $Revision: 1483 $ $Date: 2009-03-04 14:56:47 +0100 (Wed, 04 Mar 2009) $
-    /// </version>
-
     public interface IChannel
     {
+        /// <summary>
+        /// AttributeNames.
+        /// </summary>
         /// <returns> the list of channel attribute names.
         /// </returns>
         ICollection<string> AttributeNames { get; }
 
-        /// <returns> The channel ID as a {@link ChannelId}
+        /// <summary>
+        /// ChannelId.
+        /// </summary>
+        /// <returns> The channel ID as a {@link ChannelId}.
         /// </returns>
         ChannelId ChannelId { get; }
 
         long ReplayId { get; }
 
+        /// <summary>
+        /// DeepWild.
+        /// </summary>
         /// <returns> true if the channel is deeply wild.
         /// </returns>
         bool DeepWild { get; }
 
-        /// <returns> The channel id as a string
+        /// <summary>
+        /// Id.
+        /// </summary>
+        /// <returns> The channel id as a string.
         /// </returns>
         string Id { get; }
 
-        /// <returns> true if the channel is a meta channel
+        /// <summary>
+        /// Meta.
+        /// </summary>
+        /// <returns> true if the channel is a meta channel.
         /// </returns>
         bool Meta { get; }
 
-        /// <returns> true if the channel is a service channel
+        /// <summary>
+        /// Service.
+        /// </summary>
+        /// <returns> true if the channel is a service channel.
         /// </returns>
         bool Service { get; }
 
+        /// <summary>
+        /// Wild.
+        /// </summary>
         /// <returns> true if the channel is wild.
         /// </returns>
         bool Wild { get; }
 
         /// <summary> <p>Retrieves the value of named channel attribute.</p></summary>
-        /// <param name="name">the name of the attribute
+        /// <param name="name">the name of the attribute.
         /// </param>
-        /// <returns> the attribute value or null if the attribute is not present
+        /// <returns> the attribute value or null if the attribute is not present.
         /// </returns>
         object GetAttribute(string name);
 
         /// <summary> <p>Removes a named channel attribute.</p></summary>
-        /// <param name="name">the name of the attribute
+        /// <param name="name">the name of the attribute.
         /// </param>
-        /// <returns> the value of the attribute
+        /// <returns> the value of the attribute.
         /// </returns>
         object RemoveAttribute(string name);
 
@@ -81,9 +99,9 @@ namespace CometD.NetCore.Bayeux
         /// <p>Channel attributes are convenience data that allows arbitrary
         /// application data to be associated with a channel.</p>
         /// </summary>
-        /// <param name="name">the attribute name
+        /// <param name="name">the attribute name.
         /// </param>
-        /// <param name="value">the attribute value
+        /// <param name="value">the attribute value.
         /// </param>
         void SetAttribute(string name, object value);
     }
