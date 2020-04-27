@@ -30,7 +30,7 @@ namespace CometD.NetCore.Common
 
         public abstract void Handshake();
 
-        public abstract void Handshake(IDictionary<string, object> template);
+        public abstract void Handshake(IDictionary<string, object> fields);
 
         public IClientSessionChannel GetChannel(string channelId)
         {

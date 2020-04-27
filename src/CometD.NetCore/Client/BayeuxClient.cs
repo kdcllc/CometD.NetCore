@@ -16,7 +16,7 @@ using Newtonsoft.Json.Linq;
 
 namespace CometD.NetCore.Client
 {
-    public class BayeuxClient : AbstractClientSession, IBayeux
+    public class BayeuxClient : AbstractClientSession, IBayeux, IDisposable
     {
         private static readonly Mutex StateUpdateInProgressMutex = new Mutex();
 
@@ -83,6 +83,20 @@ namespace CometD.NetCore.Client
             : this(url, transports)
         {
             _logger = logger;
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _stateChanged?.Dispose();
+            }
         }
 
         public override void Handshake()
@@ -539,7 +553,7 @@ namespace CometD.NetCore.Client
         protected void ProcessConnect(IMutableMessage connect)
         {
             UpdateBayeuxClientState(
-                    delegate (BayeuxClientState oldState)
+                    oldState =>
                     {
                         var advice = connect.Advice;
                         if (advice == null)
@@ -579,10 +593,7 @@ namespace CometD.NetCore.Client
 
                         return null;
                     },
-                    () =>
-                    {
-                        Receive(connect);
-                });
+                    () => Receive(connect));
         }
 
         protected void ProcessDisconnect(IMutableMessage disconnect)
@@ -615,7 +626,9 @@ namespace CometD.NetCore.Client
 
         private bool ScheduleAction(ElapsedEventHandler action, long interval, long backoff)
         {
+#pragma warning disable CA2000 // Dispose objects before losing scope
             var timer = new System.Timers.Timer();
+#pragma warning restore CA2000 // Dispose objects before losing scope
             timer.Elapsed += action;
             var wait = interval + backoff;
             if (wait <= 0)

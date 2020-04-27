@@ -32,9 +32,9 @@ namespace CometD.NetCore.Bayeux.Client
         /// does not wait for the handshake response.</p>
         ///
         /// </summary>
-        /// <param name="template">additional fields to add to the handshake message.
+        /// <param name="fields">additional fields to add to the handshake message.
         /// </param>
-        void Handshake(IDictionary<string, object> template);
+        void Handshake(IDictionary<string, object> fields);
 
         /// <summary> <p>Returns a client side channel scoped by this session.</p>
         /// <p>The channel name may be for a specific channel (e.g. "/foo/bar")

@@ -4,7 +4,7 @@ using CometD.NetCore.Bayeux;
 
 namespace CometD.NetCore.Common
 {
-    internal class Print
+    internal sealed class Print
     {
         public static string Dictionary(IDictionary<string, object> dictionary)
         {

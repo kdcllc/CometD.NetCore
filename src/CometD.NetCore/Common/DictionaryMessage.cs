@@ -12,8 +12,6 @@ namespace CometD.NetCore.Common
     [Serializable]
     public class DictionaryMessage : Dictionary<string, object>, IMutableMessage
     {
-        private const long SerialVersionUID = 4318697940670212190L;
-
         public DictionaryMessage()
         {
         }

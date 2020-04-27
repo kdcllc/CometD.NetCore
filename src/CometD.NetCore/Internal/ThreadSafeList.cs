@@ -6,7 +6,9 @@ namespace System.Collections.Generic
     /// Thanks to https://jonlabelle.com/snippets/view/csharp/generic-thread-safe-list.
     /// </summary>
     /// <typeparam name="T"></typeparam>
+#pragma warning disable CA1001 // Types that own disposable fields should be disposable
     internal sealed class ThreadSafeList<T> : IList<T>
+#pragma warning restore CA1001 // Types that own disposable fields should be disposable
     {
         private readonly ReaderWriterLockSlim _lock;
         private readonly List<T> _list;

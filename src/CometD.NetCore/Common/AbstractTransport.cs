@@ -13,10 +13,10 @@ namespace CometD.NetCore.Common
         {
             Name = name;
             _options = options ?? new Dictionary<string, object>();
-            _prefix = new string[0];
+            _prefix = System.Array.Empty<string>();
         }
 
-        public string Name { get; private set; }
+        public string Name { get; }
 
         public ICollection<string> OptionNames
         {

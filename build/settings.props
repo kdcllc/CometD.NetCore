@@ -26,7 +26,10 @@
 		<RepositoryUrl>https://github.com/kdcllc/CometD.NetCore.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
 		<PackageLicense>https://github.com/kdcllc/CometD.NetCore/blob/master/LICENSE</PackageLicense>
-    <PackageIconUrl>https://raw.githubusercontent.com/kdcllc/CometD.NetCore/master/img/logo64x64.png</PackageIconUrl>
+
+    <!-- https://docs.microsoft.com/en-us/nuget/reference/errors-and-warnings/nu5048 -->
+    <PackageIcon>icon.png</PackageIcon>
+
     <PackageTags>aspnetcore, dotnet, cometd, salesforce, platform, events, bayeux </PackageTags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>

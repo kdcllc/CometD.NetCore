@@ -10,3 +10,5 @@ using System.Diagnostics.CodeAnalysis;
 [assembly: SuppressMessage("StyleCop.CSharp.OrderingRules", "SA1201:Elements should appear in the correct order", Justification = "Not Applied")]
 [assembly: SuppressMessage("StyleCop.CSharp.MaintainabilityRules", "SA1401:Fields should be private", Justification = "Not Applied")]
 [assembly: SuppressMessage("Design", "CA1051:Do not declare visible instance fields", Justification = "Not Applied")]
+[assembly: SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Not Applied")]
+[assembly: SuppressMessage("Naming", "CA1721:Property names should not match get methods", Justification = "Not Applied")]
