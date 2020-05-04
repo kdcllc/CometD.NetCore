@@ -30,7 +30,8 @@
 
   <ItemGroup Label="SourceLink">
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
-    <PackageReference Include="Bet.CodeAnalyzers" Version="1.0.7" PrivateAssets="All" />
+    <PackageReference Include="Bet.CodeAnalyzers" Version="1.0.9" PrivateAssets="All" />
+    <PackageReference Include="Bet.EditorConfig" Version="1.0.9" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
