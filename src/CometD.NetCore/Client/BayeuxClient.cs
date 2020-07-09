@@ -18,7 +18,7 @@ namespace CometD.NetCore.Client
 {
     public class BayeuxClient : AbstractClientSession, IBayeux, IDisposable
     {
-        private static readonly Mutex StateUpdateInProgressMutex = new Mutex();
+        private readonly object _stateUpdateInProgressLock = new object();
 
         private readonly ILogger _logger;
 
@@ -693,9 +693,11 @@ namespace CometD.NetCore.Client
             BayeuxClientStateUpdater_createDelegate create,
             BayeuxClientStateUpdater_postCreateDelegate postCreate)
         {
-            StateUpdateInProgressMutex.WaitOne();
-            ++_stateUpdateInProgress;
-            StateUpdateInProgressMutex.ReleaseMutex();
+            lock (_stateUpdateInProgressLock)
+            {
+                ++_stateUpdateInProgress;
+            }
+
             var oldState = _bayeuxClientState;
 
             var newState = create(oldState);
@@ -722,15 +724,15 @@ namespace CometD.NetCore.Client
             newState.Execute();
 
             // Notify threads waiting in waitFor()
-            StateUpdateInProgressMutex.WaitOne();
-            --_stateUpdateInProgress;
-
-            if (_stateUpdateInProgress == 0)
+            lock (_stateUpdateInProgressLock)
             {
-                _stateChanged.Set();
-            }
+                --_stateUpdateInProgress;
 
-            StateUpdateInProgressMutex.ReleaseMutex();
+                if (_stateUpdateInProgress == 0)
+                {
+                    _stateChanged.Set();
+                }
+            }
         }
 
         public enum State
