@@ -30,6 +30,7 @@
         public const string SUBSCRIPTION_FIELD = "subscription";
         public const string SUCCESSFUL_FIELD = "successful";
         public const string SUPPORTED_CONNECTION_TYPES_FIELD = "supportedConnectionTypes";
+        public const string TIMEOUT_FIELD = "timeout";
         public const string TIMESTAMP_FIELD = "timestamp";
         public const string TRANSPORT_FIELD = "transport";
         public const string VERSION_FIELD = "version";
