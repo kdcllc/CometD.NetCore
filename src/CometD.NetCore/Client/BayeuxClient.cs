@@ -1187,7 +1187,7 @@ namespace CometD.NetCore.Client
                     int adviceTimeoutValue = Convert.ToInt32(adviceTimeoutField);
                     if (adviceTimeoutValue != 0)
                     {
-                        _bayeuxClient.ScheduleConnect(Interval, Backoff, adviceTimeoutValue);
+                        _bayeuxClient?.ScheduleConnect(Interval, Backoff, adviceTimeoutValue);
                         return;
                     }
                 }
