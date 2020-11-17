@@ -18,7 +18,7 @@ namespace CometD.NetCore.Client
 {
     public class BayeuxClient : AbstractClientSession, IBayeux, IDisposable
     {
-        private static readonly Mutex StateUpdateInProgressMutex = new Mutex();
+        private readonly object _stateUpdateInProgressLock = new object();
 
         private readonly ILogger _logger;
 
@@ -449,7 +449,7 @@ namespace CometD.NetCore.Client
             return State.INVALID;
         }
 
-        protected bool SendConnect()
+        protected bool SendConnect(int clientTimeout)
         {
             var bayeuxClientState = _bayeuxClientState;
             if (IsHandshook(bayeuxClientState))
@@ -460,10 +460,10 @@ namespace CometD.NetCore.Client
                 if (bayeuxClientState.TypeValue == State.CONNECTING || bayeuxClientState.TypeValue == State.UNCONNECTED)
                 {
                     // First connect after handshake or after failure, add advice
-                    message.GetAdvice(true)["timeout"] = 0;
+                    message.GetAdvice(true)[MessageFields.TIMEOUT_FIELD] = 0;
                 }
 
-                bayeuxClientState.Send(_connectListener, message);
+                bayeuxClientState.Send(_connectListener, message, clientTimeout);
                 return true;
             }
 
@@ -619,9 +619,9 @@ namespace CometD.NetCore.Client
             return action;
         }
 
-        protected bool ScheduleConnect(long interval, long backoff)
+        protected bool ScheduleConnect(long interval, long backoff, int clientTimeout = ClientTransport.DEFAULT_TIMEOUT)
         {
-            return ScheduleAction((object sender, ElapsedEventArgs e) => SendConnect(), interval, backoff);
+            return ScheduleAction((object sender, ElapsedEventArgs e) => SendConnect(clientTimeout), interval, backoff);
         }
 
         private bool ScheduleAction(ElapsedEventHandler action, long interval, long backoff)
@@ -693,9 +693,11 @@ namespace CometD.NetCore.Client
             BayeuxClientStateUpdater_createDelegate create,
             BayeuxClientStateUpdater_postCreateDelegate postCreate)
         {
-            StateUpdateInProgressMutex.WaitOne();
-            ++_stateUpdateInProgress;
-            StateUpdateInProgressMutex.ReleaseMutex();
+            lock (_stateUpdateInProgressLock)
+            {
+                ++_stateUpdateInProgress;
+            }
+
             var oldState = _bayeuxClientState;
 
             var newState = create(oldState);
@@ -722,15 +724,15 @@ namespace CometD.NetCore.Client
             newState.Execute();
 
             // Notify threads waiting in waitFor()
-            StateUpdateInProgressMutex.WaitOne();
-            --_stateUpdateInProgress;
-
-            if (_stateUpdateInProgress == 0)
+            lock (_stateUpdateInProgressLock)
             {
-                _stateChanged.Set();
-            }
+                --_stateUpdateInProgress;
 
-            StateUpdateInProgressMutex.ReleaseMutex();
+                if (_stateUpdateInProgress == 0)
+                {
+                    _stateChanged.Set();
+                }
+            }
         }
 
         public enum State
@@ -975,16 +977,16 @@ namespace CometD.NetCore.Client
                 }
             }
 
-            public void Send(ITransportListener listener, IMutableMessage message)
+            public void Send(ITransportListener listener, IMutableMessage message, int clientTimeout = ClientTransport.DEFAULT_TIMEOUT)
             {
                 IList<IMutableMessage> messages = new List<IMutableMessage>
                 {
                     message
                 };
-                Send(listener, messages);
+                Send(listener, messages, clientTimeout);
             }
 
-            public void Send(ITransportListener listener, IList<IMutableMessage> messages)
+            public void Send(ITransportListener listener, IList<IMutableMessage> messages, int clientTimeout = ClientTransport.DEFAULT_TIMEOUT)
             {
                 foreach (var message in messages)
                 {
@@ -1006,7 +1008,7 @@ namespace CometD.NetCore.Client
 
                 if (messages.Count > 0)
                 {
-                    Transport.Send(listener, messages);
+                    Transport.Send(listener, messages, clientTimeout);
                 }
             }
 
@@ -1180,7 +1182,19 @@ namespace CometD.NetCore.Client
 
             public override void Execute()
             {
-                _bayeuxClient.ScheduleConnect(Interval, Backoff);
+                var adviceTimeoutField = _bayeuxClient?._bayeuxClientState?.Advice[MessageFields.TIMEOUT_FIELD];
+
+                if (!(adviceTimeoutField is null))
+                {
+                    int adviceTimeoutValue = Convert.ToInt32(adviceTimeoutField);
+                    if (adviceTimeoutValue != 0)
+                    {
+                        _bayeuxClient?.ScheduleConnect(Interval, Backoff, adviceTimeoutValue);
+                        return;
+                    }
+                }
+
+                _bayeuxClient?.ScheduleConnect(Interval, Backoff);
             }
         }
 

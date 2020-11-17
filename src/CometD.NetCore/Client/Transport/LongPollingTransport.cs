@@ -94,7 +94,7 @@ namespace CometD.NetCore.Client.Transport
                 ITransportListener listener,
                 IList<IMutableMessage> messages,
                 HttpWebRequest request,
-                int requestTimeout = 120000)
+                int requestTimeout = DEFAULT_TIMEOUT)
             {
                 _listener = listener;
                 _messages = messages;
@@ -158,10 +158,7 @@ namespace CometD.NetCore.Client.Transport
             PerformNextRequest();
         }
 
-        public override void Send(
-            ITransportListener listener,
-            IList<IMutableMessage> messages,
-            int requestTimeout = 1200)
+        public override void Send(ITransportListener listener, IList<IMutableMessage> messages, int requestTimeout)
         {
             _logger?.LogDebug($"send({messages.Count} message(s)");
 
@@ -187,12 +184,16 @@ namespace CometD.NetCore.Client.Transport
             (request.CookieContainer ?? (request.CookieContainer = new CookieContainer())).Add(GetCookieCollection());
 
             (request.Headers ?? (request.Headers = new WebHeaderCollection())).Add(GetHeaderCollection());
+            if (requestTimeout < DEFAULT_TIMEOUT)
+            {
+                request.Timeout = requestTimeout + GetOption(MAX_NETWORK_DELAY_OPTION, 5000);
+            }
 
             var content = JsonConvert.SerializeObject(ObjectConverter.ToListOfDictionary(messages));
 
             _logger?.LogDebug($"Send: {content}");
 
-            var longPollingRequest = new LongPollingRequest(listener, messages, request, requestTimeout);
+            var longPollingRequest = new LongPollingRequest(listener, messages, request);
 
             var exchange = new TransportExchange(this, listener, messages, longPollingRequest)
             {
@@ -254,7 +255,7 @@ namespace CometD.NetCore.Client.Transport
                 exchange.Listener.OnSending(ObjectConverter.ToListOfIMessage(exchange.Messages));
                 var result = exchange.Request.BeginGetResponse(new AsyncCallback(GetResponseCallback), exchange);
 
-                long timeout = exchange?.LongPollingRequest?.RequestTimout ?? 120000;
+                long timeout = exchange?.LongPollingRequest?.RequestTimout ?? DEFAULT_TIMEOUT;
                 ThreadPool.RegisterWaitForSingleObject(result.AsyncWaitHandle, new WaitOrTimerCallback(TimeoutCallback), exchange, timeout, true);
 
                 exchange.IsSending = false;
