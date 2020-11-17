@@ -1,5 +1,6 @@
 # CometD for Salesforce Platform events
 
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://raw.githubusercontent.com/kdcllc/cometd-netcore/master/LICENSE)
 [![Build status](https://ci.appveyor.com/api/projects/status/6t0kmjpr6ckvhrxe?svg=true)](https://ci.appveyor.com/project/kdcllc/cometd-netcore)
 [![NuGet](https://img.shields.io/nuget/v/CometD.NetCore2.svg)](https://www.nuget.org/packages?q=CometD.NetCore2)
 ![Nuget](https://img.shields.io/nuget/dt/CometD.NetCore2)

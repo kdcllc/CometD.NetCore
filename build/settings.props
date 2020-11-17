@@ -2,7 +2,7 @@
 
   <PropertyGroup Label="Basic Settings">
     <IsPackable>true</IsPackable>
-    <VersionPrefix>2.0.5-preview1</VersionPrefix>
+    <VersionPrefix>2.0.6-preview1</VersionPrefix>
     <LangVersion>latest</LangVersion>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
@@ -26,10 +26,7 @@
 		<RepositoryUrl>https://github.com/kdcllc/CometD.NetCore.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
 		<PackageLicense>https://github.com/kdcllc/CometD.NetCore/blob/master/LICENSE</PackageLicense>
-
-    <!-- https://docs.microsoft.com/en-us/nuget/reference/errors-and-warnings/nu5048 -->
     <PackageIcon>icon.png</PackageIcon>
-
     <PackageTags>aspnetcore, dotnet, cometd, salesforce, platform, events, bayeux </PackageTags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
