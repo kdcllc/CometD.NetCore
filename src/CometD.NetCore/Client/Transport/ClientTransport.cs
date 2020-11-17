@@ -7,6 +7,7 @@ namespace CometD.NetCore.Client.Transport
 {
     public abstract class ClientTransport : AbstractTransport
     {
+        public const int DEFAULT_TIMEOUT = 120000;
         public const string INTERVAL_OPTION = "interval";
         public const string MAX_NETWORK_DELAY_OPTION = "maxNetworkDelay";
         public const string TIMEOUT_OPTION = "timeout";
@@ -34,6 +35,6 @@ namespace CometD.NetCore.Client.Transport
         /// <param name="listener"></param>
         /// <param name="messages"></param>
         /// <param name="requestTimeOut">Default timeout for the request is 2min or 120000 seconds.</param>
-        public abstract void Send(ITransportListener listener, IList<IMutableMessage> messages, int requestTimeOut = 120000);
+        public abstract void Send(ITransportListener listener, IList<IMutableMessage> messages, int requestTimeOut);
     }
 }
