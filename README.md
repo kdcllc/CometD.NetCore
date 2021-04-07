@@ -6,10 +6,20 @@
 ![Nuget](https://img.shields.io/nuget/dt/CometD.NetCore2)
 [![feedz.io](https://img.shields.io/badge/endpoint.svg?url=https://f.feedz.io/kdcllc/kdcllc/shield/CometD.NetCore2/latest)](https://f.feedz.io/kdcllc/kdcllc/packages/CometD.NetCore2/latest/download)
 
+_Note: Pre-release packages are distributed via [feedz.io](https://f.feedz.io/kdcllc/kcllc/nuget/index.json)._
+
+## Summary
+
 This repo contains the CometD .NET Core implementation of the Java ported code.
 
 - `CometD.NetCore2` - [CometD.org](CometD.org) implementation, supports replay id.
 - [CometD.NetCore.Salesforce project](https://github.com/kdcllc/CometD.NetCore.Salesforce) - provides with implementation of this library.
+
+[![buymeacoffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/vyve0og)
+
+## Give a Star! :star:
+
+If you like or are using this project to learn or start your solution, please give it a star. Thanks!
 
 ## Install
 
@@ -17,12 +27,12 @@ This repo contains the CometD .NET Core implementation of the Java ported code.
     dotnet add package CometD.NetCore2
 ```
 
-## Related projects
+## Projects that utilize this library
 
 - [CometD.NetCore.Salesforce](https://github.com/kdcllc/CometD.NetCore.Salesforce) - contais Saleforce Auth utility and implementation for relay id.
 - [Bet.BuildingBlocks.SalesforceEventBus](https://github.com/kdcllc/Bet.BuildingBlocks.SalesforceEventBus) - reusable EvenBus for Salesforce.
 
-## Configure Saleforce Developer instance
+## Configure Salesforce Developer instance
 
 [Watch: Salesforce Platform Events - Video](https://www.youtube.com/watch?v=L6OWyCfQD6U)
 
@@ -61,11 +71,16 @@ Use workbench to test the Event [workbench](https://workbench.developerforce.com
 
 [Use login instead of test](https://github.com/developerforce/Force.com-Toolkit-for-NET/wiki/Web-Server-OAuth-Flow-Sample#am-i-using-the-test-environment)
 
-## Special thanks to the following projects and contributors:
+## Special thanks to our contributors
+
+- [Martin Podlubny](https://github.com/martin-podlubny)
+- [jesbacon](https://github.com/jesbacon)
+- [Chris Woolum](https://github.com/cwoolum)
+
+## Related projects
 
 - [Oyatel/CometD.NET](https://github.com/Oyatel/CometD.NET)
 - [nthachus/CometD.NET](https://github.com/nthachus/CometD.NET)
 - [tdawgy/CometD.NetCore](https://github.com/tdawgy/CometD.NetCore)
 - [anthonyreilly/NetCoreForce](https://github.com/anthonyreilly/NetCoreForce)
 - [eShopOnContainers](https://github.com/dotnet-architecture/eShopOnContainers)
-- [Chris Woolum](https://github.com/cwoolum)

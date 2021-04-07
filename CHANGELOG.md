@@ -1,6 +1,9 @@
 Change Log
 ===============================================================================
 
+Version 2.0.7 (2021-04-06)
+* update dependencies
+
 Version 2.0.6 (2020-11-17)
 ---------------------------
 * Removed several logging nuget packages are referenced, but are unused #16

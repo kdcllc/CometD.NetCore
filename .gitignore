@@ -3,13 +3,19 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+nugets/
+packages/
+TestResult/
+
+# StyleCop
+#[Ss]tyle[Cc]op.*
+
 # User-specific files
 *.suo
 *.user
 *.userosscache
 *.sln.docstates
-*appsettings.Development.json
-packages
+#*appsettings.Development.json
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
@@ -54,7 +60,7 @@ BenchmarkDotNet.Artifacts/
 project.lock.json
 project.fragment.lock.json
 artifacts/
-**/Properties/launchSettings.json
+# **/Properties/launchSettings.json
 
 # StyleCop
 StyleCopReport.xml
