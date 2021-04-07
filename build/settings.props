@@ -1,44 +1,43 @@
 <Project>
 
-  <PropertyGroup Label="Basic Settings">
-    <IsPackable>true</IsPackable>
-    <VersionPrefix>2.0.6-preview1</VersionPrefix>
-    <LangVersion>latest</LangVersion>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
-    <NoWarn>$(NoWarn);CS1591;CS1574;CS1572</NoWarn>
-  </PropertyGroup>
+	<PropertyGroup Label="Basic Settings">
+		<IsPackable>true</IsPackable>
+		<VersionPrefix>2.0.7-preview1</VersionPrefix>
+		<TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+		<SuppressNETCoreSdkPreviewMessage>true</SuppressNETCoreSdkPreviewMessage>
+		<NoWarn>$(NoWarn);CS1591;CS1574;CS1572</NoWarn>
+	</PropertyGroup>
 
-  <PropertyGroup Label="Ownership Settings">
-    <Company>King David Consulting LLC</Company>
-    <Authors>kdcllc</Authors>
-    <Copyright>King David Consulting LLC</Copyright>
-  </PropertyGroup>
+	<PropertyGroup Label="Ownership Settings">
+		<Company>King David Consulting LLC</Company>
+		<Authors>kdcllc</Authors>
+		<Copyright>King David Consulting LLC</Copyright>
+	</PropertyGroup>
 
-  <PropertyGroup>
-    <LangVersion>latest</LangVersion>
-    <Nullable>disable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<LangVersion>latest</LangVersion>
+		<Nullable>disable</Nullable>
+	</PropertyGroup>
 
-  <PropertyGroup Label="Nuget Package Settings">
+	<PropertyGroup Label="Nuget Package Settings">
 		<Description>CometD C# implementation of Bayeux protocal. This is port of the Java CometD implementation.</Description>
 		<PackageProjectUrl>https://github.com/kdcllc/CometD.NetCore</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/kdcllc/CometD.NetCore.git</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
+		<RepositoryType>git</RepositoryType>
 		<PackageLicense>https://github.com/kdcllc/CometD.NetCore/blob/master/LICENSE</PackageLicense>
-    <PackageIcon>icon.png</PackageIcon>
-    <PackageTags>aspnetcore, dotnet, cometd, salesforce, platform, events, bayeux </PackageTags>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-  </PropertyGroup>
+		<PackageIcon>icon.png</PackageIcon>
+		<PackageTags>aspnetcore, dotnet, cometd, salesforce, platform, events, bayeux </PackageTags>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	</PropertyGroup>
 
-  <PropertyGroup Label="SourceLink Settings">
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+	<PropertyGroup Label="SourceLink Settings">
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
+		<AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
 
-    <!-- https://github.com/kdcllc/Bet.AspNetCore/issues/103 -->
-    <DebugType>Embedded</DebugType>
-    <EmbedAllSources>True</EmbedAllSources>
-  </PropertyGroup>
+		<!-- https://github.com/kdcllc/Bet.AspNetCore/issues/103 -->
+		<DebugType>Embedded</DebugType>
+		<EmbedAllSources>True</EmbedAllSources>
+	</PropertyGroup>
 </Project>

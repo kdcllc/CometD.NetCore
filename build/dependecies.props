@@ -1,17 +1,26 @@
 <Project>
 
+  <PropertyGroup>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
+    <NetCoreCommon>3.1.*</NetCoreCommon>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net5.0' Or '$(TargetFramework)' == 'netstandard2.1'">
+    <NetCoreCommon>5.0.*</NetCoreCommon>
+  </PropertyGroup>
+
   <ItemGroup Label="NetCore">
-    <PackageReference Update="Microsoft.Extensions.Logging.Abstractions" Version="3.1.10" />
+    <PackageReference Update="Microsoft.Extensions.Logging.Abstractions" Version="$(NetCoreCommon)" />
   </ItemGroup>
 
   <ItemGroup Label="Shared Libraries">
-    <PackageReference Update="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Update="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 
   <ItemGroup Label="SourceLink">
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
-    <PackageReference Include="Bet.CodeAnalyzers" Version="1.0.9" PrivateAssets="All" />
-    <PackageReference Include="Bet.EditorConfig" Version="1.0.9" PrivateAssets="All" />
+    <PackageReference Include="Bet.CodeAnalyzers" Version="1.0.10" PrivateAssets="All" />
+    <PackageReference Include="Bet.EditorConfig" Version="1.0.10" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
