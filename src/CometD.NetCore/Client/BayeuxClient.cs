@@ -217,6 +217,11 @@ namespace CometD.NetCore.Client
             return null;
         }
 
+        public void SetCookie(Cookie cookie)
+        {
+            _cookieCollection.Add(cookie);
+        }
+
         public void SetCookie(string name, string val)
         {
             SetCookie(name, val, -1);
