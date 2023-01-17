@@ -5,8 +5,8 @@
     <NetCoreCommon>3.1.*</NetCoreCommon>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net5.0' Or '$(TargetFramework)' == 'netstandard2.1'">
-    <NetCoreCommon>5.0.*</NetCoreCommon>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net7.0' Or '$(TargetFramework)' == 'netstandard2.1'">
+    <NetCoreCommon>7.0.*</NetCoreCommon>
   </PropertyGroup>
 
   <ItemGroup Label="NetCore">
@@ -14,13 +14,13 @@
   </ItemGroup>
 
   <ItemGroup Label="Shared Libraries">
-    <PackageReference Update="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Update="Newtonsoft.Json" Version="13.0.2" />
   </ItemGroup>
 
   <ItemGroup Label="SourceLink">
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
-    <PackageReference Include="Bet.CodeAnalyzers" Version="1.0.10" PrivateAssets="All" />
-    <PackageReference Include="Bet.EditorConfig" Version="1.0.10" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.*" PrivateAssets="All" />
+    <PackageReference Include="Bet.CodeAnalyzers" Version="1.0.*" PrivateAssets="All" />
+    <PackageReference Include="Bet.EditorConfig" Version="1.0.*" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
