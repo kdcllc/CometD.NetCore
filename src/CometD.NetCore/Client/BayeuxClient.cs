@@ -714,7 +714,8 @@ namespace CometD.NetCore.Client
             if (!oldState.IsUpdateableTo(newState))
             {
                 _logger?.LogDebug($"State not updateable : {oldState} -> {newState}");
-                return;
+                //return;
+                throw new StateNotUpdatableException(); //force reconnection
             }
 
             _bayeuxClientState = newState;
